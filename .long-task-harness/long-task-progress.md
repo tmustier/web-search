@@ -118,7 +118,7 @@ Refine the CLI contract and roadmap based on early review
 
 ---
 
-### Session 3 | 2026-01-06 | Commits: ea363cd..HEAD
+### Session 3 | 2026-01-06 | Commits: ea363cd..f43a39d
 
 #### Metadata
 - **Features**: py-setup-001 (completed), cli-001 (completed), providers-001 (progressed), fetch-001 (progressed), extract-001 (progressed)
@@ -127,7 +127,7 @@ Refine the CLI contract and roadmap based on early review
   - `uv.lock` - locked dependencies
   - `src/wstk/*` - core implementation (CLI, cache, fetch, search, extract)
   - `tests/*` - unit tests
-- **Commit Summary**: `feat: add Python CLI scaffold and baseline providers`
+- **Commit Summary**: `feat: add v0.1.0 python CLI scaffold`
 
 #### Goal
 Build a runnable v0.1.0 reference implementation
