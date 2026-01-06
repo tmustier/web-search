@@ -507,6 +507,12 @@ Alternatives we may want later:
 - **TypeScript/Node**: strong for reusing existing Readability/Turndown patterns and Playwright, but tends to pull a heavier dependency graph by default and can be harder to keep “optional”.
 - **Go/Rust**: great for distribution (single binary) and performance, but you still need an external browser engine for JS rendering and a solid extraction stack; better as a follow-on once behavior is validated.
 
+### Tooling (proposed)
+
+- Type checking: `pyright` (fast, good editor support; treat type errors as CI failures)
+- Lint/format: `ruff` (format + lint; keep rules minimal at first)
+- Tests: `pytest` (focus on CLI contract + provider selection + caching behaviors)
+
 ## 13) Open questions (to resolve with you)
 
 This spec deliberately leaves some key decisions open:
