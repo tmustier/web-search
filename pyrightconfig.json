@@ -1,0 +1,6 @@
+{
+  "include": ["src", "tests"],
+  "pythonVersion": "3.13",
+  "typeCheckingMode": "standard",
+  "reportMissingTypeStubs": "none"
+}

@@ -3,7 +3,7 @@
 ## Project Overview
 
 **Started**: 2026-01-06
-**Status**: Spec-first (no implementation yet)
+**Status**: v0.1.0 implementation in progress
 **Repository**: https://github.com/tmustier/web-search
 
 ### Project Goals
@@ -32,14 +32,17 @@
 - Research notes and references: `docs/research.md`
 - Repo overview: `README.md`
 - Session continuity config: `.long-task-harness/*`, `AGENTS.md`, `.claude/settings.json`
+- Python reference implementation scaffold: `pyproject.toml`, `src/wstk/*`, `uv.lock`
+- Working CLI: `wstk providers|search|fetch|extract`
 
 ### What's Not Working
-- No implementation yet (no Python package / CLI / providers)
-- No end-to-end demo of search → fetch → extract
+- No browser rendering path yet (`render`, `--method browser`)
+- No `pipeline` and `eval` commands yet
+- Extraction quality needs tuning for docs-heavy pages (formatting / code blocks)
 
 ### Blocked On
-- Choosing the initial keyless baseline (search + fetch) that’s reliable enough without being brittle.
-- Nailing default extraction outputs (reader-mode vs doc-mode) without overfitting to a single use case.
+- Defining the default “doc mode” extraction output shape (beyond readability)
+- Designing explicit escalation for JS-only / blocked pages (render vs remote endpoints)
 
 ---
 
@@ -86,7 +89,7 @@ Capture spec + research and set up continuity harness
 
 ---
 
-### Session 2 | 2026-01-06 | Commits: ed849fe..HEAD
+### Session 2 | 2026-01-06 | Commits: ed849fe..ea363cd
 
 #### Metadata
 - **Features**: docs-001 (progressed), harness-001 (progressed)
@@ -112,6 +115,37 @@ Refine the CLI contract and roadmap based on early review
 1. Add Python package + CLI scaffold (uv, ruff, pyright, pytest)
 2. Implement baseline providers (keyless search + HTTP fetch + readability extraction)
 3. Decide the “good enough” keyless search baseline + default extraction shape (reader-mode vs doc-mode)
+
+---
+
+### Session 3 | 2026-01-06 | Commits: ea363cd..HEAD
+
+#### Metadata
+- **Features**: py-setup-001 (completed), cli-001 (completed), providers-001 (progressed), fetch-001 (progressed), extract-001 (progressed)
+- **Files Changed**:
+  - `pyproject.toml` - Python package metadata + tooling deps (ruff/pyright/pytest)
+  - `uv.lock` - locked dependencies
+  - `src/wstk/*` - core implementation (CLI, cache, fetch, search, extract)
+  - `tests/*` - unit tests
+- **Commit Summary**: `feat: add Python CLI scaffold and baseline providers`
+
+#### Goal
+Build a runnable v0.1.0 reference implementation
+
+#### Accomplished
+- [x] Added `wstk` CLI with `providers`, `search`, `fetch`, `extract`
+- [x] Implemented keyless search (`ddgs`) and optional Brave API search (`BRAVE_API_KEY`)
+- [x] Implemented HTTP fetch with basic caching (TTL + size budget) and block/JS-only detection heuristics
+- [x] Implemented readability-based extraction to markdown/text
+- [x] Added tests + `ruff` + `pyright` and verified locally
+
+#### Decisions
+- **[D8]** Prefer a minimal built-in baseline (ddgs + httpx + readability) and iterate extraction quality with eval later.
+
+#### Next Steps
+1. Add a proper `render` command (Playwright optional dependency) and plumb `extract --method browser`
+2. Implement a `docs` extraction strategy (better headings/code handling) and decide default “doc mode” output
+3. Add wrappers/skills for agent runtimes (Codex/Claude/Droid) and a tiny eval harness (`eval-001`)
 
 ---
 

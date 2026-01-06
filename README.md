@@ -1,4 +1,4 @@
-# Web Search Toolkit (spec-first)
+# Web Search Toolkit (spec + reference implementation)
 
 This repo is a spec and reference implementation plan for a portable “search + fetch + render + extract” toolkit intended for coding/research agents (Codex CLI, Claude Code, Droid/Factory, etc.).
 
@@ -7,4 +7,9 @@ This repo is a spec and reference implementation plan for a portable “search +
 
 ## Status
 
-Spec draft only (no implementation yet).
+Early implementation in progress (targeting `0.1.0`).
+
+## Quickstart (dev)
+
+- Install deps: `cd web-search && uv sync`
+- Run: `uv run wstk --help`

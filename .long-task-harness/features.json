@@ -6,7 +6,7 @@
     "created": "2026-01-06",
     "last_updated": "2026-01-06",
     "total_features": 10,
-    "completed_features": 2
+    "completed_features": 4
   },
   "features": [
     {
@@ -100,9 +100,20 @@
         "Pytest runs with at least a smoke test",
         "CLI entry point exists (even if stubbed)"
       ],
-      "passes": false,
+      "passes": true,
       "notes": "",
-      "history": {"sessions": [], "files": [], "decisions": []}
+      "history": {
+        "sessions": [
+          {
+            "session": 3,
+            "date": "2026-01-06",
+            "action": "completed",
+            "summary": "Added pyproject/uv lock, implemented wstk package, and verified ruff/pyright/pytest"
+          }
+        ],
+        "files": ["pyproject.toml", "pyrightconfig.json", "uv.lock", "src/wstk/*", "tests/*"],
+        "decisions": []
+      }
     },
     {
       "id": "cli-001",
@@ -116,9 +127,25 @@
         "Output respects `NO_COLOR` and supports `--no-color`",
         "Non-interactive mode supports `--no-input`"
       ],
-      "passes": false,
+      "passes": true,
       "notes": "",
-      "history": {"sessions": [], "files": [], "decisions": []}
+      "history": {
+        "sessions": [
+          {
+            "session": 3,
+            "date": "2026-01-06",
+            "action": "completed",
+            "summary": "Implemented providers/search/fetch/extract commands with JSON envelope and plain output modes"
+          }
+        ],
+        "files": ["src/wstk/cli.py", "src/wstk/output.py", "src/wstk/errors.py"],
+        "decisions": [
+          {
+            "session": 3,
+            "decision": "Implement CLI with argparse to keep runtime dependencies minimal"
+          }
+        ]
+      }
     },
     {
       "id": "providers-001",
@@ -133,7 +160,18 @@
       ],
       "passes": false,
       "notes": "",
-      "history": {"sessions": [], "files": [], "decisions": []}
+      "history": {
+        "sessions": [
+          {
+            "session": 3,
+            "date": "2026-01-06",
+            "action": "progressed",
+            "summary": "Added SearchProvider interface and implemented ddgs + brave_api providers with auto selection"
+          }
+        ],
+        "files": ["src/wstk/search/*"],
+        "decisions": []
+      }
     },
     {
       "id": "fetch-001",
@@ -147,7 +185,18 @@
       ],
       "passes": false,
       "notes": "",
-      "history": {"sessions": [], "files": [], "decisions": []}
+      "history": {
+        "sessions": [
+          {
+            "session": 3,
+            "date": "2026-01-06",
+            "action": "progressed",
+            "summary": "Implemented http fetch + cache (TTL/size) with basic blocked/JS-only heuristics"
+          }
+        ],
+        "files": ["src/wstk/fetch/http.py", "src/wstk/cache.py"],
+        "decisions": []
+      }
     },
     {
       "id": "extract-001",
@@ -161,7 +210,18 @@
       ],
       "passes": false,
       "notes": "",
-      "history": {"sessions": [], "files": [], "decisions": []}
+      "history": {
+        "sessions": [
+          {
+            "session": 3,
+            "date": "2026-01-06",
+            "action": "progressed",
+            "summary": "Implemented readability-based extraction to markdown/text and wired into `wstk extract`"
+          }
+        ],
+        "files": ["src/wstk/extract/readability_extractor.py"],
+        "decisions": []
+      }
     },
     {
       "id": "safety-001",
