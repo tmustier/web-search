@@ -125,7 +125,7 @@ Working name: `wstk` (“web search toolkit”). Bikeshed later.
 - `--no-cache`
 - `--fresh` (bypass cache reads; still writes new artifacts unless `--no-cache`)
 - `--cache-max-mb <N>` (default: 1024; LRU prune)
-- `--cache-ttl <duration>` (default: unset; allow e.g. `24h`, `7d`)
+- `--cache-ttl <duration>` (default: `7d`; allow e.g. `24h`, `7d`)
 - `--evidence-dir <path>` (default: `~/.cache/wstk/evidence`)
 - `--redact` (redact common secrets/PII from logs + metadata; never perfect)
 - `--robots <warn|respect|ignore>` (default: `warn`)
