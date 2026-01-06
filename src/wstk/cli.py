@@ -18,76 +18,146 @@ from wstk.timeutil import parse_duration
 from wstk.urlutil import DomainRules, is_allowed, redact_url
 
 
-def build_parser() -> argparse.ArgumentParser:
-    global_parser = argparse.ArgumentParser(add_help=False)
-    global_parser.add_argument("--json", action="store_true", help="Output machine-readable JSON")
-    global_parser.add_argument(
-        "--pretty", action="store_true", help="Pretty-print JSON (implies --json)"
+def _add_global_flags(parser: argparse.ArgumentParser, *, suppress_defaults: bool) -> None:
+    def default(value):
+        return argparse.SUPPRESS if suppress_defaults else value
+
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        default=default(False),
+        help="Output machine-readable JSON",
     )
-    global_parser.add_argument("--plain", action="store_true", help="Stable text output for piping")
-    global_parser.add_argument("--quiet", action="store_true", help="Reduce non-essential output")
-    global_parser.add_argument(
-        "--verbose", action="store_true", help="Verbose diagnostics to stderr"
+    parser.add_argument(
+        "--pretty",
+        action="store_true",
+        default=default(False),
+        help="Pretty-print JSON (implies --json)",
     )
-    global_parser.add_argument("--no-color", action="store_true", help="Disable ANSI color output")
-    global_parser.add_argument(
+    parser.add_argument(
+        "--plain",
+        action="store_true",
+        default=default(False),
+        help="Stable text output for piping",
+    )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        default=default(False),
+        help="Reduce non-essential output",
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        default=default(False),
+        help="Verbose diagnostics to stderr",
+    )
+    parser.add_argument(
+        "--no-color",
+        action="store_true",
+        default=default(False),
+        help="Disable ANSI color output",
+    )
+    parser.add_argument(
         "--no-input",
         action="store_true",
+        default=default(False),
         help="Never prompt or open interactive flows; fail with actionable diagnostics",
     )
-    global_parser.add_argument(
-        "--timeout", type=float, default=15.0, help="Network timeout in seconds"
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=default(15.0),
+        help="Network timeout in seconds",
     )
-    global_parser.add_argument("--proxy", type=str, default=None, help="HTTP(S) proxy URL")
-    global_parser.add_argument(
-        "--cache-dir", type=str, default="~/.cache/wstk", help="Cache directory"
+    parser.add_argument(
+        "--proxy",
+        type=str,
+        default=default(None),
+        help="HTTP(S) proxy URL",
     )
-    global_parser.add_argument("--no-cache", action="store_true", help="Disable cache")
-    global_parser.add_argument("--fresh", action="store_true", help="Bypass cache reads")
-    global_parser.add_argument(
-        "--cache-max-mb", type=int, default=1024, help="Cache size budget in MB"
+    parser.add_argument(
+        "--cache-dir",
+        type=str,
+        default=default("~/.cache/wstk"),
+        help="Cache directory",
     )
-    global_parser.add_argument(
-        "--cache-ttl", type=str, default="7d", help="Cache TTL (e.g. 24h, 7d)"
+    parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        default=default(False),
+        help="Disable cache",
     )
-    global_parser.add_argument(
-        "--evidence-dir", type=str, default=None, help="Evidence directory (optional)"
+    parser.add_argument(
+        "--fresh",
+        action="store_true",
+        default=default(False),
+        help="Bypass cache reads",
     )
-    global_parser.add_argument(
-        "--redact", action="store_true", help="Redact query strings from URLs in output"
+    parser.add_argument(
+        "--cache-max-mb",
+        type=int,
+        default=default(1024),
+        help="Cache size budget in MB",
     )
-    global_parser.add_argument(
+    parser.add_argument(
+        "--cache-ttl",
+        type=str,
+        default=default("7d"),
+        help="Cache TTL (e.g. 24h, 7d)",
+    )
+    parser.add_argument(
+        "--evidence-dir",
+        type=str,
+        default=default(None),
+        help="Evidence directory (optional)",
+    )
+    parser.add_argument(
+        "--redact",
+        action="store_true",
+        default=default(False),
+        help="Redact query strings from URLs in output",
+    )
+    parser.add_argument(
         "--robots",
         choices=["warn", "respect", "ignore"],
-        default="warn",
+        default=default("warn"),
         help="robots.txt stance (default: warn)",
     )
-    global_parser.add_argument(
+    parser.add_argument(
         "--allow-domain",
         action="append",
-        default=[],
+        default=default([]),
         help="Allow domain (repeatable); restricts network operations",
     )
-    global_parser.add_argument(
+    parser.add_argument(
         "--block-domain",
         action="append",
-        default=[],
+        default=default([]),
         help="Block domain (repeatable); restricts network operations",
     )
-    global_parser.add_argument(
+    parser.add_argument(
         "--policy",
         choices=["standard", "strict", "permissive"],
-        default="standard",
+        default=default("standard"),
         help="Policy mode (default: standard)",
     )
 
-    parser = argparse.ArgumentParser(prog="wstk", parents=[global_parser], add_help=True)
+
+def build_parser() -> argparse.ArgumentParser:
+    global_root = argparse.ArgumentParser(add_help=False)
+    _add_global_flags(global_root, suppress_defaults=False)
+
+    global_sub = argparse.ArgumentParser(add_help=False)
+    _add_global_flags(global_sub, suppress_defaults=True)
+
+    parser = argparse.ArgumentParser(prog="wstk", parents=[global_root], add_help=True)
     parser.add_argument("--version", action="version", version=__version__)
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    subparsers.add_parser("providers", parents=[global_parser], help="List available providers")
+    subparsers.add_parser("providers", parents=[global_sub], help="List available providers")
 
-    search_p = subparsers.add_parser("search", parents=[global_parser], help="Search the web")
+    search_p = subparsers.add_parser("search", parents=[global_sub], help="Search the web")
     search_p.add_argument("query", type=str, help="Search query")
     search_p.add_argument("-n", "--max-results", type=int, default=10, help="Maximum results")
     search_p.add_argument(
@@ -108,7 +178,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--include-raw", action="store_true", help="Include provider raw payload subset in JSON"
     )
 
-    fetch_p = subparsers.add_parser("fetch", parents=[global_parser], help="Fetch a URL over HTTP")
+    fetch_p = subparsers.add_parser("fetch", parents=[global_sub], help="Fetch a URL over HTTP")
     fetch_p.add_argument("url", type=str, help="URL to fetch")
     fetch_p.add_argument(
         "--header", action="append", default=[], help="Extra header (repeatable): key:value"
@@ -139,7 +209,7 @@ def build_parser() -> argparse.ArgumentParser:
     fetch_p.add_argument("--include-body", action="store_true", help="Include body in JSON (debug)")
 
     extract_p = subparsers.add_parser(
-        "extract", parents=[global_parser], help="Extract readable content"
+        "extract", parents=[global_sub], help="Extract readable content"
     )
     extract_p.add_argument("target", type=str, help="URL, path, or '-' for stdin")
     extract_p.add_argument("--strategy", choices=["auto", "readability", "docs"], default="auto")

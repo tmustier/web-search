@@ -173,6 +173,35 @@ Align the spec and roadmap to what’s now implemented
 
 ---
 
+### Session 5 | 2026-01-06 | Commits: 376bdd0..(next)
+
+#### Metadata
+- **Features**: py-setup-001 (progressed), cli-001 (progressed)
+- **Files Changed**:
+  - `docs/test-plan.md` - explicit test plan for CLI + behaviours
+  - `tests/test_cli_contract.py` - contract tests for output modes, exit codes, policy gating
+  - `src/wstk/cli.py` - fix argparse global flag precedence (global flags now work before or after subcommands)
+- **Commit Summary**: `test: add test plan and CLI contract tests`
+
+#### Goal
+Make the agent-facing contract testable and verify real-world search behaviour
+
+#### Accomplished
+- [x] Defined a test plan focused on contract stability and safe failure modes
+- [x] Added contract tests for JSON envelope, `--plain` output, and strict policy gating
+- [x] Fixed CLI parsing bug where global flags before the subcommand were being overwritten
+- [x] Compared `wstk search` output against a separate “manual” DuckDuckGo HTML scrape for the same query
+
+#### Notes
+- `wstk search` defaulted to `brave_api` in this environment (because `BRAVE_API_KEY` is configured).
+- Manual DuckDuckGo HTML results differed from Brave API results (more blog/SEO hits), while the top results overlapped.
+
+#### Next Steps
+1. Decide policy semantics for `render` (especially `strict` vs `standard`) and implement `render-001`
+2. Add a minimal `pipeline` command contract (even if it’s just `search` + `extract` for top-1)
+
+---
+
 <!--
 =============================================================================
 SESSION TEMPLATE - Copy below this line for new sessions
