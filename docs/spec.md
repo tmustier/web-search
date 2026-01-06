@@ -4,6 +4,15 @@ Goal: replace a patchwork of search/browse/scrape scripts with one portable tool
 
 This spec is intentionally “implementation-aware” (so it can be built), but leaves some choices open (language/runtime, exact extraction stack) pending user decisions.
 
+## Implementation status (v0.1.0, Python)
+
+Reference implementation lives in this repo:
+
+- Implemented: `wstk providers`, `wstk search`, `wstk fetch`, `wstk extract` (HTTP only, readability extraction)
+- Search providers: `ddgs` (keyless), `brave_api` (optional `BRAVE_API_KEY`)
+- Fetch: `httpx` + local cache (TTL + size budget)
+- Not yet: `render`, `pipeline`, `eval`, doc-mode extractor, browser method
+
 ## 1) Problem statement
 
 Today’s agent workflows are fragmented:
@@ -240,6 +249,9 @@ Key flags:
 Behavior:
 - If blocked (403 / known bot-wall patterns), return exit `4` (and in `--json`, include `blocked=true` and reason). Do not auto-escalate by default.
 
+`--plain` behavior:
+- output a local path to the stored response body (useful for piping into `wstk extract <path>`)
+
 Block/consent heuristics (non-exhaustive):
 - status codes: 401/403/429
 - “enable javascript” / “verify you are human” / “checking your browser”
@@ -276,6 +288,9 @@ Key flags:
 
 Output:
 - `Document` (with `extracted` filled)
+
+`--plain` behavior:
+- output extracted content (markdown by default; `--text`/`--markdown` override)
 
 Content-type handling:
 - HTML: use extractor strategies.

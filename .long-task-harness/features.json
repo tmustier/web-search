@@ -5,7 +5,7 @@
     "project_name": "web-search",
     "created": "2026-01-06",
     "last_updated": "2026-01-06",
-    "total_features": 10,
+    "total_features": 12,
     "completed_features": 4
   },
   "features": [
@@ -260,6 +260,35 @@
         "`wstk eval --suite <file>` runs deterministically with caching controls",
         "Report includes success/blocked rates and basic extraction heuristics",
         "Supports adding new suites without code changes"
+      ],
+      "passes": false,
+      "notes": "",
+      "history": {"sessions": [], "files": [], "decisions": []}
+    },
+    {
+      "id": "render-001",
+      "name": "Browser rendering (local)",
+      "description": "JS rendering is available as an explicit escalation path via a local browser engine",
+      "steps": [
+        "`wstk render <url>` produces a Document with final DOM snapshot (and optional screenshot)",
+        "`wstk extract --method browser <url>` uses render output when HTTP fetch is insufficient",
+        "Profile/session reuse is explicit and gated (`--profile` / `--use-system-profile`)",
+        "Headful/headless behaviors are explicit and respect `--no-input`",
+        "Clear error modes: `needs_render` vs `blocked` vs `timeout`"
+      ],
+      "passes": false,
+      "notes": "",
+      "history": {"sessions": [], "files": [], "decisions": []}
+    },
+    {
+      "id": "pipeline-001",
+      "name": "One-shot pipeline helper",
+      "description": "Agents can do a bounded search → extract flow with explicit selection and budgets",
+      "steps": [
+        "`wstk pipeline <query>` returns search results plus extracted document(s)",
+        "`--plan` mode returns candidates without fetching",
+        "Bounded by `--top-k`/`--extract-k` and timeouts",
+        "In `standard` policy, does not auto-escalate to browser rendering"
       ],
       "passes": false,
       "notes": "",

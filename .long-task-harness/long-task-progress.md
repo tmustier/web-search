@@ -149,6 +149,30 @@ Build a runnable v0.1.0 reference implementation
 
 ---
 
+### Session 4 | 2026-01-06 | Commits: 9b50a36..HEAD
+
+#### Metadata
+- **Features**: docs-001 (progressed), render-001 (started), pipeline-001 (started)
+- **Files Changed**:
+  - `docs/spec.md` - record v0.1.0 implementation status and `--plain` semantics
+  - `.long-task-harness/features.json` - add `render-001` and `pipeline-001`
+- **Commit Summary**: `docs: align spec and roadmap with v0.1.0`
+
+#### Goal
+Align the spec and roadmap to what’s now implemented
+
+#### Accomplished
+- [x] Documented current implementation status (v0.1.0) and remaining gaps
+- [x] Clarified `--plain` semantics for `fetch` and `extract`
+- [x] Added explicit roadmap items for browser rendering and pipeline helper
+
+#### Next Steps
+1. Decide how we want `render-001` to behave in strict vs standard vs permissive policy
+2. Implement `render` as an optional dependency (Playwright) and plumb `extract --method browser`
+3. Define a small `pipeline` output schema that’s maximally agent-friendly
+
+---
+
 <!--
 =============================================================================
 SESSION TEMPLATE - Copy below this line for new sessions
