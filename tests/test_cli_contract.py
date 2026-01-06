@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 import pytest
 
 import wstk.cli as cli
+import wstk.commands.search_cmd as search_cmd
 from wstk.errors import ExitCode
 from wstk.search.base import SearchProvider
 from wstk.search.types import SearchQuery, SearchResultItem
@@ -66,7 +67,11 @@ def test_search_plain_outputs_urls(
         ]
     )
 
-    monkeypatch.setattr(cli, "select_search_provider", lambda *_a, **_k: (provider, ["fake"]))
+    monkeypatch.setattr(
+        search_cmd.search_registry,
+        "select_search_provider",
+        lambda *_a, **_k: (provider, ["fake"]),
+    )
 
     exit_code = cli.main(["--plain", "search", "test"])
     assert exit_code == ExitCode.OK
@@ -80,7 +85,11 @@ def test_search_no_results_exit_3(
     capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     provider = _FakeSearchProvider(results=[])
-    monkeypatch.setattr(cli, "select_search_provider", lambda *_a, **_k: (provider, ["fake"]))
+    monkeypatch.setattr(
+        search_cmd.search_registry,
+        "select_search_provider",
+        lambda *_a, **_k: (provider, ["fake"]),
+    )
 
     exit_code = cli.main(["--plain", "search", "test"])
     assert exit_code == ExitCode.NOT_FOUND
@@ -93,7 +102,11 @@ def test_search_no_results_human_prints_message(
     capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     provider = _FakeSearchProvider(results=[])
-    monkeypatch.setattr(cli, "select_search_provider", lambda *_a, **_k: (provider, ["fake"]))
+    monkeypatch.setattr(
+        search_cmd.search_registry,
+        "select_search_provider",
+        lambda *_a, **_k: (provider, ["fake"]),
+    )
 
     exit_code = cli.main(["search", "test"])
     assert exit_code == ExitCode.NOT_FOUND

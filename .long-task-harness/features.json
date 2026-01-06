@@ -33,6 +33,12 @@
             "date": "2026-01-06",
             "action": "progressed",
             "summary": "Refined CLI contract (plain/no-input), clarified failure modes, and gated remote provider auto-selection"
+          },
+          {
+            "session": 7,
+            "date": "2026-01-06",
+            "action": "progressed",
+            "summary": "Polished public-facing docs (README/spec/research) and added CONTRIBUTING/SECURITY files for OSS readiness"
           }
         ],
         "files": ["README.md", "docs/spec.md", "docs/research.md"],
@@ -136,9 +142,21 @@
             "date": "2026-01-06",
             "action": "completed",
             "summary": "Implemented providers/search/fetch/extract commands with JSON envelope and plain output modes"
+          },
+          {
+            "session": 8,
+            "date": "2026-01-06",
+            "action": "progressed",
+            "summary": "Refactored CLI into small command modules for readability while keeping the CLI contract stable"
           }
         ],
-        "files": ["src/wstk/cli.py", "src/wstk/output.py", "src/wstk/errors.py"],
+        "files": [
+          "src/wstk/cli.py",
+          "src/wstk/cli_support.py",
+          "src/wstk/commands/*",
+          "tests/test_cli_contract.py",
+          "tests/test_cli_eval_contract.py"
+        ],
         "decisions": [
           {
             "session": 3,

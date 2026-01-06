@@ -174,7 +174,7 @@ Align the spec and roadmap to what’s now implemented
 
 ---
 
-### Session 5 | 2026-01-06 | Commits: 376bdd0..(next)
+### Session 5 | 2026-01-06 | Commits: 376bdd0..e18fac8
 
 #### Metadata
 - **Features**: py-setup-001 (progressed), cli-001 (progressed)
@@ -201,7 +201,7 @@ Make the agent-facing contract testable and verify real-world search behaviour
 1. Decide policy semantics for `render` (especially `strict` vs `standard`) and implement `render-001`
 2. Add a minimal `pipeline` command contract (even if it’s just `search` + `extract` for top-1)
 
-### Session 6 | 2026-01-06 | Commits: (uncommitted)
+### Session 6 | 2026-01-06 | Commits: e18fac8..bfcac44
 
 #### Metadata
 - **Features**: eval-001 (progressed), docs-001 (progressed), cli-001 (progressed)
@@ -212,7 +212,7 @@ Make the agent-facing contract testable and verify real-world search behaviour
   - `tests/test_cli_eval_contract.py`, `tests/test_eval_*` - eval contract + unit tests
   - `docs/spec.md`, `docs/test-plan.md`, `README.md` - document eval behavior
   - `.long-task-harness/*` - record eval feature progress
-- **Commit Summary**: (pending) `feat: add wstk eval harness`
+- **Commit Summary**: `feat: add eval harness`
 
 #### Goal
 Add a small, cache-backed eval harness to compare search providers and track basic quality over time
@@ -226,6 +226,30 @@ Add a small, cache-backed eval harness to compare search providers and track bas
 2. Implement `pipeline` and `render` escalation paths
 
 ---
+
+### Session 7 | 2026-01-06 | Commits: bfcac44..eafe5aa
+
+#### Metadata
+- **Features**: docs-001 (progressed)
+- **Files Changed**:
+  - `README.md` - public-facing overview, usage examples, safety notes
+  - `docs/spec.md`, `docs/research.md` - small public-facing edits
+  - `CONTRIBUTING.md`, `SECURITY.md` - contribution and reporting guidelines
+- **Commit Summary**: `docs: prep repo for public release`
+
+#### Goal
+Prepare the repo for public release (docs + hygiene)
+
+#### Accomplished
+- [x] Added contributor-facing docs and clarified usage
+- [x] Removed environment-specific references from research notes
+
+---
+
+### Session 8 | 2026-01-06 | Commits: (uncommitted)
+
+#### Goal
+Refactor for code cleanliness (smaller modules, clearer responsibilities)
 
 <!--
 =============================================================================

@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 import wstk.cli as cli
+import wstk.commands.eval_cmd as eval_cmd
 from wstk.errors import ExitCode, WstkError
 from wstk.search.base import SearchProvider
 from wstk.search.types import SearchQuery, SearchResultItem
@@ -57,7 +58,11 @@ def test_eval_json_envelope_ok(
             )
         ]
     )
-    monkeypatch.setattr(cli, "select_search_provider", lambda *_a, **_k: (provider, ["fake"]))
+    monkeypatch.setattr(
+        eval_cmd.search_registry,
+        "select_search_provider",
+        lambda *_a, **_k: (provider, ["fake"]),
+    )
 
     suite_path = _write_suite(tmp_path, expected_domains=["example.com"])
     exit_code = cli.main(
@@ -94,7 +99,11 @@ def test_eval_fail_on_miss_returns_exit_1(
             )
         ]
     )
-    monkeypatch.setattr(cli, "select_search_provider", lambda *_a, **_k: (provider, ["fake"]))
+    monkeypatch.setattr(
+        eval_cmd.search_registry,
+        "select_search_provider",
+        lambda *_a, **_k: (provider, ["fake"]),
+    )
 
     suite_path = _write_suite(tmp_path, expected_domains=["missing.example"])
     exit_code = cli.main(
@@ -123,7 +132,11 @@ def test_eval_fail_on_error_returns_exit_1(
     provider = _FakeSearchProvider(
         error=WstkError(code="provider_error", message="boom", exit_code=ExitCode.RUNTIME_ERROR)
     )
-    monkeypatch.setattr(cli, "select_search_provider", lambda *_a, **_k: (provider, ["fake"]))
+    monkeypatch.setattr(
+        eval_cmd.search_registry,
+        "select_search_provider",
+        lambda *_a, **_k: (provider, ["fake"]),
+    )
 
     suite_path = _write_suite(tmp_path, expected_domains=["example.com"])
     exit_code = cli.main(
