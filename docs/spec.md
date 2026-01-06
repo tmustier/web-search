@@ -8,10 +8,10 @@ This spec is intentionally “implementation-aware” (so it can be built), but 
 
 Reference implementation lives in this repo:
 
-- Implemented: `wstk providers`, `wstk search`, `wstk fetch`, `wstk extract` (HTTP only, readability extraction)
+- Implemented: `wstk providers`, `wstk search`, `wstk fetch`, `wstk extract` (HTTP only, readability extraction), `wstk eval` (search-only metrics)
 - Search providers: `ddgs` (keyless), `brave_api` (optional `BRAVE_API_KEY`)
 - Fetch: `httpx` + local cache (TTL + size budget)
-- Not yet: `render`, `pipeline`, `eval`, doc-mode extractor, browser method
+- Not yet: `render`, `pipeline`, doc-mode extractor, browser method
 
 ## 1) Problem statement
 

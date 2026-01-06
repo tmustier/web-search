@@ -110,12 +110,12 @@ License note:
 - Firecrawl OSS is AGPL-3.0. Practically, that means “vendor their code into this repo” is likely not desirable for many users.
 - A safer approach is a provider plugin that calls a user-configured Firecrawl endpoint (cloud or self-hosted), without embedding AGPL code.
 
-### Local skill patterns (why policy modes matter)
+### Why policy modes matter (observed “tool extremes”)
 
-The skills in this environment illustrate common extremes:
+Many web-enabled agent stacks fall into extremes:
 
-- **`brave-search` skill**: uses an official search API + a simple HTTP fetch for `--content`. No JS rendering, no profile reuse, no caching; succeeds on many docs sites but fails on JS-heavy/blocked sites.
-- **`browser-tools` skill**: drives a real Chrome via CDP and can reuse the user’s profile/cookies; this can “get through” more sites but increases exfiltration and accidental-retention risk.
+- **Search + basic fetch**: often reliable for public docs, but fails on JS-heavy sites and bot walls; limited diagnostics and limited reproducibility (no caching/evidence).
+- **Full browser automation (optionally with user profile/cookies)**: higher success rate on “hard” pages, but higher privacy/exfiltration and accidental-retention risk.
 
 Implication:
 
