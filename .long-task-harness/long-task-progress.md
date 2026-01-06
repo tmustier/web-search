@@ -149,7 +149,7 @@ Build a runnable v0.1.0 reference implementation
 
 ---
 
-### Session 4 | 2026-01-06 | Commits: 9b50a36..HEAD
+### Session 4 | 2026-01-06 | Commits: 9b50a36..5fbe3a6
 
 #### Metadata
 - **Features**: docs-001 (progressed), render-001 (started), pipeline-001 (started)
