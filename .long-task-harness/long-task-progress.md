@@ -31,6 +31,7 @@
 - Spec draft and defaults: `docs/spec.md`
 - Research notes and references: `docs/research.md`
 - Repo overview: `README.md`
+- Session continuity config: `.long-task-harness/*`, `AGENTS.md`, `.claude/settings.json`
 
 ### What's Not Working
 - No implementation yet (no Python package / CLI / providers)
@@ -44,7 +45,7 @@
 
 ## Session Log
 
-### Session 1 | 2026-01-06 | Commits: b7e2984..f45de12
+### Session 1 | 2026-01-06 | Commits: b7e2984..103ae4b
 
 #### Metadata
 - **Features**: docs-001 (completed), harness-001 (completed)
@@ -52,8 +53,10 @@
   - `README.md` - repo overview
   - `docs/spec.md` - spec draft (CLI, providers, policy modes)
   - `docs/research.md` - research + safety references
-  - `.long-task-harness/*` - harness init (uncommitted)
-- **Commit Summary**: `Add initial web search toolkit spec`, `Document Python tooling: pyright`, `Add additional tooling: uv, pre-commit, CI`
+  - `.long-task-harness/*` - harness tracking + project plan
+  - `AGENTS.md` - persistent harness invocation (Codex)
+  - `.claude/settings.json` - Claude Code hooks
+- **Commit Summary**: `Add initial web search toolkit spec`, `Document Python tooling: pyright`, `Add additional tooling: uv, pre-commit, CI`, `chore: initialize long-task-harness`
 
 #### Goal
 Capture spec + research and set up continuity harness
@@ -63,6 +66,9 @@ Capture spec + research and set up continuity harness
 - [x] Documented defaults (policy modes, caching, provider precedence, Firecrawl endpoint provider)
 - [x] Initialized long-task-harness
 - [x] Replaced placeholder harness features with project plan
+- [x] Added persistent harness invocation (`AGENTS.md`)
+- [x] Installed Claude Code project hooks (`.claude/settings.json`)
+- [x] Installed repo-local git pre-commit hook (not tracked in git)
 
 #### Decisions
 - **[D1]** Fail-fast default with `--policy` bundling (standard/strict/permissive).
@@ -74,9 +80,9 @@ Capture spec + research and set up continuity harness
 - Existing skills often require API keys; the keyless baseline needs careful choice to avoid brittle scraping.
 
 #### Next Steps
-1. Replace placeholder feature list in `.long-task-harness/features.json`
-2. Add Python package + CLI scaffold (uv, ruff, pyright, pytest)
-3. Implement baseline providers (keyless search + HTTP fetch + readability extraction)
+1. Add Python package + CLI scaffold (uv, ruff, pyright, pytest)
+2. Implement baseline providers (keyless search + HTTP fetch + readability extraction)
+3. Decide the “good enough” keyless search baseline + default extraction shape (reader-mode vs doc-mode)
 
 ---
 

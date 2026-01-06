@@ -53,7 +53,9 @@
       "steps": [
         "`.long-task-harness/` exists in repo",
         "`long-task-progress.md` reflects this project (not generic template)",
-        "`features.json` contains real project features (not examples)"
+        "`features.json` contains real project features (not examples)",
+        "`AGENTS.md` tells agents how to invoke the harness",
+        "Optional: `.claude/settings.json` installs Claude Code hooks for reminders"
       ],
       "passes": true,
       "notes": "",
@@ -63,10 +65,12 @@
             "session": 1,
             "date": "2026-01-06",
             "action": "completed",
-            "summary": "Initialized harness and tailored progress/features to project"
+            "summary": "Initialized harness, tailored progress/features, and added agent-facing reminders"
           }
         ],
         "files": [
+          "AGENTS.md",
+          ".claude/settings.json",
           ".long-task-harness/long-task-progress.md",
           ".long-task-harness/features.json",
           ".long-task-harness/init.sh"
