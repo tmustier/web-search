@@ -36,7 +36,8 @@ We want a single toolkit with:
 
 ### Out of scope (explicit non-goals)
 
-- CAPTCHA solving / anti-bot circumvention as a primary feature.
+- CAPTCHA solving.
+- “Stealth/anti-bot bypass” is not part of the default core path; if ever included, it must be explicit opt-in, tightly budgeted, and designed to avoid large-scale scraping.
 - Automated login to third-party sites without the user’s explicit session/profile.
 - A full autonomous browser agent (planning/execution loop). This is a *toolkit* used by agents.
 - Large-scale crawling.
@@ -48,6 +49,7 @@ We want a single toolkit with:
 3. **Evidence-first**: store artifacts (raw HTML, final extracted markdown, optional screenshot) so answers can be audited.
 4. **Safety by default**: treat web content as untrusted; add guardrails like domain allow/block and explicit “interactive” mode.
 5. **Composable interfaces**: stable JSON for machine use; readable text for humans; predictable exit codes.
+6. **Fail fast, escalate explicitly**: default to “diagnose and stop” on blocks/JS-only pages; make escalation a deliberate choice (`--method auto`, `--render`, or future `--try-hard`).
 
 ## 4) User stories
 
@@ -121,8 +123,14 @@ Working name: `wstk` (“web search toolkit”). Bikeshed later.
 - `--proxy <url>` (HTTP(S) proxy for search/fetch when supported)
 - `--cache-dir <path>` (default: `~/.cache/wstk`)
 - `--no-cache`
+- `--fresh` (bypass cache reads; still writes new artifacts unless `--no-cache`)
+- `--cache-max-mb <N>` (default: 1024; LRU prune)
+- `--cache-ttl <duration>` (default: unset; allow e.g. `24h`, `7d`)
 - `--evidence-dir <path>` (default: `~/.cache/wstk/evidence`)
-- `--redact` (redact cookies/headers from logs and evidence metadata)
+- `--redact` (redact common secrets/PII from logs + metadata; never perfect)
+- `--robots <warn|respect|ignore>` (default: `warn`)
+- `--allow-domain <domain>` (repeatable; restrict network operations)
+- `--block-domain <domain>` (repeatable; restrict network operations)
 
 ### JSON envelope (baseline)
 
@@ -212,7 +220,7 @@ Key flags:
 - `--include-body` (embed response body in JSON; otherwise store in evidence and return a path)
 
 Behavior:
-- If blocked (403 / known bot-wall patterns), return exit `4` unless `--json` is used (then include `blocked=true` and reason).
+- If blocked (403 / known bot-wall patterns), return exit `4` (and in `--json`, include `blocked=true` and reason). Do not auto-escalate by default.
 
 Block/consent heuristics (non-exhaustive):
 - status codes: 401/403/429
@@ -230,7 +238,7 @@ Key flags:
 - `--headful/--headless` (default: headless; allow “assist” mode)
 
 Notes:
-- This is the JS/403 fallback. It should be clearly labeled “interactive/privileged” when using a real profile.
+- Rendering is an explicit escalation path. It should be clearly labeled “interactive/privileged” when using a real profile.
 
 #### `wstk extract <url|path>`
 
@@ -242,7 +250,7 @@ Inputs:
 
 Key flags:
 - `--strategy <auto|readability|docs>`
-- `--method <http|browser|auto>`
+- `--method <http|browser|auto>` (default: `http`; `auto` may try `http` then `browser` in a future “escalate” mode)
 - `--markdown/--text/--both` (default: both)
 - `--max-chars <N>` (guardrails)
 - `--include-html` (embed HTML in JSON; otherwise store in evidence and return a path)
@@ -261,7 +269,9 @@ One-shot “search → pick → extract” helper intended for agents.
 
 Key flags:
 - `--top-k <N>` (search results to consider)
-- `--extract-k <N>` (how many results to extract)
+- `--extract-k <N>` (how many results to extract; default: 1)
+- `--method <http|browser|auto>` (default: `http`)
+- `--escalate <none|render>` (default: `none`; future)
 - `--prefer-domains <domain>` (repeatable)
 - `--budget <ms>` or `--budget <tokens>` (future; for limiting work)
 
@@ -282,8 +292,8 @@ Metrics (v0):
 Default resolution for `extract <url>`:
 
 1. `fetch` via HTTP
-2. if blocked/empty/JS shell → `render`
-3. `extract` with `strategy=auto` (choose readability vs docs heuristic)
+2. if blocked/empty/JS shell → return a typed failure (`blocked` / `needs_render`) with diagnostics and suggested next command(s)
+3. on success: `extract` with `strategy=auto` (choose readability vs docs heuristic)
 
 Default resolution for `pipeline "<query>"`:
 
@@ -291,7 +301,7 @@ Default resolution for `pipeline "<query>"`:
    - if keys available: prefer paid/official API providers
    - else: keyless providers
 2. apply domain preferences (allow/block/site)
-3. optionally extract top results (bounded by `--extract-k`)
+3. optionally extract top results (bounded by `--extract-k`, `--method`, and future `--escalate`)
 
 ## 8) Provider plugin model
 
@@ -340,13 +350,27 @@ The toolkit should:
   - `tool_diagnostics` vs `page_text`
 - include `source_url` + timestamps + hashes
 - allow an agent to apply “domain allowlist” defaults centrally
+- support “watch mode” style affordances (surface sensitive domains and require explicit user confirmation at the agent layer)
 
 ### Content access policy
 
-- No CAPTCHA solving in v0.
-- If blocked:
-  - provide diagnostics and recommended alternatives (different source, cached mirror, user browser).
-- Browser profile use is opt-in and clearly labeled.
+- `robots.txt`: default warn-only (`--robots=warn`), with optional strict mode (`--robots=respect`) for teams that want it.
+- No CAPTCHA solving.
+- If blocked, provide diagnostics and recommended alternatives (different source, cached mirror, user browser).
+- Browser profile use is opt-in and clearly labeled; prefer reusing an existing user session only when (a) the user explicitly asks for gated content or (b) it’s unambiguously required and the user consents.
+
+### Data leakage + redaction (why `--redact` exists)
+
+Web retrieval can leak sensitive data into logs/evidence:
+
+- URL query params may contain tokens (OAuth codes, signed URLs, session IDs).
+- HTML may contain personalized or private data (“welcome, <name>”, internal docs).
+- Request headers/cookies (if using a real browser profile) can grant account access.
+
+Default stance:
+
+- keep sensitive state (cookies, auth headers) out of stdout JSON
+- store raw artifacts locally with clear retention controls (size limits, TTL, pruning)
 
 ## 11) Packaging for agent ecosystems (progressive disclosure)
 
