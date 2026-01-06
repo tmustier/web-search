@@ -278,8 +278,19 @@
         "Advanced flags documented in `references/` (403/JS-only troubleshooting, provider notes)"
       ],
       "passes": false,
-      "notes": "",
-      "history": {"sessions": [], "files": [], "decisions": []}
+      "notes": "SKILL.md added; references/ for advanced troubleshooting not yet added",
+      "history": {
+        "sessions": [
+          {
+            "session": 11,
+            "date": "2026-01-06",
+            "action": "progressed",
+            "summary": "Added SKILL.md with setup, commands, patterns, output formats, exit codes, and when-to-use guidance"
+          }
+        ],
+        "files": ["SKILL.md"],
+        "decisions": []
+      }
     },
     {
       "id": "eval-001",

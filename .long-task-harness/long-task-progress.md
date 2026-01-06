@@ -308,6 +308,32 @@ Make the repository publishable with a clear OSS license
 - [x] Added MIT `LICENSE`
 - [x] Updated README license section
 
+---
+
+### Session 11 | 2026-01-06 | Commits: 3bdcba9..b1d5b04
+
+#### Metadata
+- **Features**: wrappers-001 (progressed)
+- **Files Changed**:
+  - `SKILL.md` - agent skill definition for Claude Code / pi-coding-agent
+
+#### Goal
+Add agent skill wrapper for Claude Code integration
+
+#### Accomplished
+- [x] Created `SKILL.md` with proper frontmatter (name + description)
+- [x] Documented setup, commands (search/extract/fetch/providers), common patterns
+- [x] Included output formats, exit codes, global flags, and when-to-use guidance
+- [x] Symlinked to `~/.claude/skills/web-search` for local availability
+
+#### Notes
+- Skill uses `{baseDir}/.venv/bin/wstk` paths for portability
+- Description tuned for skill triggering: "web search", "content extraction", "documentation lookup"
+
+#### Next Steps
+1. Test skill in fresh Claude Code session
+2. Consider adding `references/` for advanced troubleshooting (403s, JS-only pages)
+
 <!--
 =============================================================================
 SESSION TEMPLATE - Copy below this line for new sessions
