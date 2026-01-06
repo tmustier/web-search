@@ -131,6 +131,7 @@ Working name: `wstk` (“web search toolkit”). Bikeshed later.
 - `--robots <warn|respect|ignore>` (default: `warn`)
 - `--allow-domain <domain>` (repeatable; restrict network operations)
 - `--block-domain <domain>` (repeatable; restrict network operations)
+- `--policy <standard|strict|permissive>` (default: `standard`; sets safety + caching defaults, explicit flags override)
 
 ### JSON envelope (baseline)
 
@@ -272,6 +273,7 @@ Key flags:
 - `--extract-k <N>` (how many results to extract; default: 1)
 - `--method <http|browser|auto>` (default: `http`)
 - `--escalate <none|render>` (default: `none`; future)
+- `--plan` (no fetch/extract; return candidate URLs + rationale only)
 - `--prefer-domains <domain>` (repeatable)
 - `--budget <ms>` or `--budget <tokens>` (future; for limiting work)
 
@@ -352,12 +354,65 @@ The toolkit should:
 - allow an agent to apply “domain allowlist” defaults centrally
 - support “watch mode” style affordances (surface sensitive domains and require explicit user confirmation at the agent layer)
 
+### Policy modes (pragmatic defaults, easy overrides)
+
+This project’s safety stance is “useful by default, with explicit escalations”. The CLI should support `--policy` to bundle sensible defaults, while keeping the agent in control via explicit flags.
+
+Policy modes must:
+
+- change defaults, not capabilities (explicit flags always win)
+- emit **warnings + diagnostics**, not imperative “do X” instructions (agents decide what to do next)
+- be designed around *outcomes* (predictability vs success rate vs compliance posture)
+
+#### `standard` (default)
+
+Goal: work well for day-to-day agent research without surprising behavior.
+
+- Blocks: fail fast with diagnostics; no automatic escalation to browser rendering.
+- `robots.txt`: warn-only (`--robots=warn`).
+- Caching: on by default; raw artifacts stored locally, bounded by `--cache-ttl` (default `7d`) and `--cache-max-mb` (default `1024`).
+- Redaction: off by default (favor debuggability/repro), but:
+  - never include cookies/auth headers in stdout JSON
+  - emit a warning when URLs look secret-bearing (e.g., OAuth code / signed URL patterns)
+- Privileged browsing (session reuse): supported but opt-in (`render --profile/--use-system-profile`).
+  - When a real profile/session is used, default to **no cache writes** unless explicitly overridden (to reduce accidental retention of private/authenticated content).
+
+#### `strict` (compliance-focused)
+
+Goal: minimize policy risk and accidental data retention, even at the cost of lower success rates.
+
+- Require an explicit allowlist (`--allow-domain`) for network operations (otherwise error).
+- `robots.txt`: respect (`--robots=respect`).
+- Rendering: disabled unless explicitly requested (and never with a real user profile/session).
+- Caching: metadata-only by default; require explicit opt-in to store raw artifacts.
+- Redaction: on by default (sanitize logs/metadata; still not a guarantee).
+
+#### `permissive` (try-hard, higher variance)
+
+Goal: maximize one-shot success when the user accepts higher unpredictability and policy surface area.
+
+- Allows opt-in “auto escalation” flows (e.g. `--method auto` or future `--escalate=render`).
+- May allow additional compatibility tactics (retries/backoff; alternate representations like `?output=1`, print views) while staying bounded by budgets.
+- Any “stealth/bypass” tactics must be explicit, isolated, and budgeted (see below).
+
 ### Content access policy
 
 - `robots.txt`: default warn-only (`--robots=warn`), with optional strict mode (`--robots=respect`) for teams that want it.
 - No CAPTCHA solving.
 - If blocked, provide diagnostics and recommended alternatives (different source, cached mirror, user browser).
 - Browser profile use is opt-in and clearly labeled; prefer reusing an existing user session only when (a) the user explicitly asks for gated content or (b) it’s unambiguously required and the user consents.
+
+### Anti-bot scope (compatibility vs bypass)
+
+There’s a pragmatic distinction between:
+
+- **Compatibility** (generally acceptable): realistic headers/UA, cookie jar, conservative retries/backoff, JS rendering, user-provided proxies, and opt-in reuse of the user’s existing authenticated session.
+- **Bypass/stealth** (reputationally sensitive): tactics whose primary purpose is to defeat bot detection.
+
+Project posture:
+
+- “Compatibility” is in scope (often necessary for docs).
+- “Bypass/stealth” should never be the default path. If supported, it must be explicit opt-in, with strict budgets, and designed to avoid turning this into a bulk scraping toolkit.
 
 ### Data leakage + redaction (why `--redact` exists)
 

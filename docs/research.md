@@ -104,3 +104,19 @@ Reference: https://github.com/mendableai/firecrawl
 Implications for this project:
 
 - A `pipeline` command is useful, but defaults matter: collapsing steps increases “one-shot success” but also cost, unpredictability, and policy surface area.
+
+License note:
+
+- Firecrawl OSS is AGPL-3.0. Practically, that means “vendor their code into this repo” is likely not desirable for many users.
+- A safer approach is a provider plugin that calls a user-configured Firecrawl endpoint (cloud or self-hosted), without embedding AGPL code.
+
+### Local skill patterns (why policy modes matter)
+
+The skills in this environment illustrate common extremes:
+
+- **`brave-search` skill**: uses an official search API + a simple HTTP fetch for `--content`. No JS rendering, no profile reuse, no caching; succeeds on many docs sites but fails on JS-heavy/blocked sites.
+- **`browser-tools` skill**: drives a real Chrome via CDP and can reuse the user’s profile/cookies; this can “get through” more sites but increases exfiltration and accidental-retention risk.
+
+Implication:
+
+- A unified toolkit that supports both “HTTP fetch” and “privileged browser session” needs explicit policy defaults (`standard/strict/permissive`) and strong budgeting/retention controls.
