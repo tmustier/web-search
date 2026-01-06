@@ -110,6 +110,9 @@ Working name: `wstk` (“web search toolkit”). Bikeshed later.
 - In `--json` mode:
   - stdout must be **valid JSON only** (no banners, no progress spinners).
   - stderr may include logs (unless `--quiet`).
+- In `--plain` mode:
+  - stdout is stable, line-oriented text intended for piping (no color, no extra decorations).
+  - stderr may include logs/warnings (unless `--quiet`).
 
 ### Global flags
 
@@ -117,8 +120,11 @@ Working name: `wstk` (“web search toolkit”). Bikeshed later.
 - `--version`
 - `--json` (machine output; stable schema; no extra logs on stdout)
 - `--pretty` (pretty-print JSON)
+- `--plain` (stable, line-oriented text for piping)
 - `--quiet` (only essential output)
 - `--verbose` (debug logs to stderr)
+- `--no-color` (disable ANSI color output)
+- `--no-input` (never prompt / never open interactive flows; fail with actionable diagnostics)
 - `--timeout <seconds>` (default per subcommand)
 - `--proxy <url>` (HTTP(S) proxy for search/fetch when supported)
 - `--cache-dir <path>` (default: `~/.cache/wstk`)
@@ -132,6 +138,10 @@ Working name: `wstk` (“web search toolkit”). Bikeshed later.
 - `--allow-domain <domain>` (repeatable; restrict network operations)
 - `--block-domain <domain>` (repeatable; restrict network operations)
 - `--policy <standard|strict|permissive>` (default: `standard`; sets safety + caching defaults, explicit flags override)
+
+Notes:
+- `--pretty` implies `--json` (or errors if `--json` is not supported by the command).
+- Respect `NO_COLOR` and `TERM=dumb` unless overridden.
 
 ### JSON envelope (baseline)
 
@@ -166,6 +176,7 @@ On failure (`ok=false`), `error` is populated with:
 - `2` invalid usage (CLI parsing/validation)
 - `3` not found / empty result (only for commands where “no results” is distinct)
 - `4` blocked / access denied (403, bot wall, paywall detected, etc.)
+- `5` needs render / JS-only (the next step is typically `wstk render ...` or `wstk extract --method browser ...`)
 
 ### Subcommands
 
@@ -173,6 +184,7 @@ On failure (`ok=false`), `error` is populated with:
 
 List available providers and whether they are enabled.
 
+- In `--plain` mode, output provider ids one per line.
 - Output includes:
   - provider id
   - type (`search`, `fetch`, `render`, `extract`)
@@ -189,6 +201,7 @@ Key flags:
 - `--region <code>` (e.g. `us-en`, `uk-en`, `wt-wt`)
 - `--safe-search <on|moderate|off>`
 - `--provider <id>` (default: `auto`)
+- `--include-raw` (include a provider-specific raw payload subset in JSON)
 - `--allow-domain <domain>` (repeatable)
 - `--block-domain <domain>` (repeatable)
 - `--site <domain>` (syntactic sugar: allow-domain + query augmentation)
@@ -206,12 +219,16 @@ Optional additions (strongly preferred for debugging/eval):
 - `matched_rules` (e.g. `["site:docs", "preferred_domain"]`)
 - `raw` (provider-specific raw payload subset, gated behind `--verbose` or `--include-raw`)
 
+`--plain` behavior:
+- output the result URLs, one per line (best for `... | head -n 1 | xargs wstk extract`).
+
 #### `wstk fetch <url>`
 
 Fetch raw content over HTTP (no JS). Produces a `Document` with `raw_html` and basic metadata.
 
 Key flags:
-- `--headers <json>` (advanced)
+- `--header <key:value>` (repeatable; rejects `authorization`/`cookie`/`set-cookie`)
+- `--headers-file <path|->` (advanced; JSON object; use `-` to read from stdin if it contains sensitive values)
 - `--user-agent <string>`
 - `--accept-language <string>`
 - `--max-bytes <N>` (default e.g. 5MB)
@@ -248,6 +265,7 @@ Extract readable content.
 Inputs:
 - URL (will fetch/render as needed), or
 - path to previously saved HTML/Document.
+- `-` (read HTML/Document JSON from stdin)
 
 Key flags:
 - `--strategy <auto|readability|docs>`
@@ -323,7 +341,7 @@ When multiple search providers are enabled and `--provider auto` is used, the bu
 
 1. `brave_api` (if `BRAVE_API_KEY` configured)
 2. `searxng_local` (if base URL configured and reachable)
-3. `firecrawl_endpoint` (if base URL configured; key optional depending on deployment)
+3. `firecrawl_endpoint` (if base URL is **local/self-hosted**; otherwise requires explicit opt-in)
 4. `ddgs` (best-effort keyless fallback)
 
 Users must be able to override this order in config.
@@ -336,13 +354,12 @@ Configuration (suggested):
 
 - `FIRECRAWL_BASE_URL` (required): e.g. `https://api.firecrawl.dev` or a self-hosted URL
 - `FIRECRAWL_API_KEY` (optional): if required by the endpoint; never passed via CLI flags
+- `FIRECRAWL_ALLOW_AUTO` (optional, default false): allow use under `--provider auto` even when the base URL is remote/cloud
 
 Behavior expectations:
 
 - Treated as a remote provider: it may send URLs (and possibly retrieved page content) to a third-party service depending on deployment; emit clear metadata about when it was used.
-- Never used implicitly in `standard` policy. Use only when:
-  - explicitly selected with `--provider firecrawl_endpoint`, or
-  - explicitly enabled as an escalation path under `permissive` (future).
+- In `standard` policy, it is only eligible for `--provider auto` when the base URL is local/self-hosted (e.g. `localhost`, loopback). For remote/cloud endpoints, require explicit opt-in (config) or explicit `--provider firecrawl_endpoint`.
 
 License note:
 
@@ -428,7 +445,7 @@ Goal: work well for day-to-day agent research without surprising behavior.
 
 Goal: minimize policy risk and accidental data retention, even at the cost of lower success rates.
 
-- Require an explicit allowlist (`--allow-domain`) for network operations (otherwise error).
+- Require an explicit allowlist (`--allow-domain`) for page retrieval operations (`fetch`, `render`, `extract` when input is a URL).
 - `robots.txt`: respect (`--robots=respect`).
 - Rendering: disabled unless explicitly requested (and never with a real user profile/session).
 - Caching: metadata-only by default; require explicit opt-in to store raw artifacts.

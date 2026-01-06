@@ -5,7 +5,7 @@
     "project_name": "web-search",
     "created": "2026-01-06",
     "last_updated": "2026-01-06",
-    "total_features": 8,
+    "total_features": 10,
     "completed_features": 2
   },
   "features": [
@@ -27,6 +27,12 @@
             "date": "2026-01-06",
             "action": "completed",
             "summary": "Wrote spec/research and documented defaults (policy, caching, provider precedence)"
+          },
+          {
+            "session": 2,
+            "date": "2026-01-06",
+            "action": "progressed",
+            "summary": "Refined CLI contract (plain/no-input), clarified failure modes, and gated remote provider auto-selection"
           }
         ],
         "files": ["README.md", "docs/spec.md", "docs/research.md"],
@@ -66,6 +72,12 @@
             "date": "2026-01-06",
             "action": "completed",
             "summary": "Initialized harness, tailored progress/features, and added agent-facing reminders"
+          },
+          {
+            "session": 2,
+            "date": "2026-01-06",
+            "action": "progressed",
+            "summary": "Updated feature roadmap and progress log after spec refinements"
           }
         ],
         "files": [
@@ -97,10 +109,12 @@
       "name": "CLI skeleton",
       "description": "CLI supports the basic user journey and flags, with clear error modes",
       "steps": [
-        "`web-search search <query>` returns results (even with stub providers)",
-        "`web-search fetch <url>` fetches a page and reports status",
-        "`web-search extract <url|file>` outputs readable content",
-        "Flags include `--policy`, `--provider`, `--cache`, `--timeout`, `--json`"
+        "`wstk search <query>` returns results (even with stub providers)",
+        "`wstk fetch <url>` fetches a page and reports status",
+        "`wstk extract <url|file>` outputs readable content",
+        "Flags include `--policy`, `--provider`, `--cache`, `--timeout`, `--json`, `--plain`",
+        "Output respects `NO_COLOR` and supports `--no-color`",
+        "Non-interactive mode supports `--no-input`"
       ],
       "passes": false,
       "notes": "",
@@ -114,7 +128,8 @@
         "SearchProvider interface with consistent output schema",
         "At least one keyless provider implemented and documented",
         "Optional key-based providers supported (Brave API, etc.)",
-        "Provider selection supports `auto` ordering (prefer configured reliability)"
+        "Provider selection supports `auto` ordering (prefer configured reliability)",
+        "Remote providers with higher privacy surface area are gated (policy/config) and emit clear metadata/warnings"
       ],
       "passes": false,
       "notes": "",
@@ -157,6 +172,34 @@
         "`--redact` supports removing obvious secrets and tokens from outputs",
         "Policy modes gate high-privilege fetch methods",
         "Logs avoid storing credentials/cookies by default"
+      ],
+      "passes": false,
+      "notes": "",
+      "history": {"sessions": [], "files": [], "decisions": []}
+    },
+    {
+      "id": "wrappers-001",
+      "name": "Agent wrappers (skills)",
+      "description": "Thin wrapper skills exist for common agent runtimes with progressive disclosure",
+      "steps": [
+        "Codex/Cursor/Droid-style `SKILL.md` teaches when to use search vs fetch vs render vs extract",
+        "Claude Code wrapper (or docs) exists with the same contract",
+        "Wrappers default to `wstk ... --json` and surface concise diagnostics to the agent",
+        "Advanced flags documented in `references/` (403/JS-only troubleshooting, provider notes)"
+      ],
+      "passes": false,
+      "notes": "",
+      "history": {"sessions": [], "files": [], "decisions": []}
+    },
+    {
+      "id": "eval-001",
+      "name": "Evaluation harness (quality tracking)",
+      "description": "A small eval harness can compare provider success and extraction quality over time",
+      "steps": [
+        "Suite format defined (queries + expected domains/URLs + optional gold snippets)",
+        "`wstk eval --suite <file>` runs deterministically with caching controls",
+        "Report includes success/blocked rates and basic extraction heuristics",
+        "Supports adding new suites without code changes"
       ],
       "passes": false,
       "notes": "",

@@ -86,6 +86,35 @@ Capture spec + research and set up continuity harness
 
 ---
 
+### Session 2 | 2026-01-06 | Commits: ed849fe..HEAD
+
+#### Metadata
+- **Features**: docs-001 (progressed), harness-001 (progressed)
+- **Files Changed**:
+  - `docs/spec.md` - CLI refinements (`--plain`, `--no-color`, `--no-input`), clearer error modes, Firecrawl auto gating
+  - `.long-task-harness/features.json` - add eval + wrapper features; refine CLI/provider requirements
+- **Commit Summary**: `docs: refine spec and feature roadmap`
+
+#### Goal
+Refine the CLI contract and roadmap based on early review
+
+#### Accomplished
+- [x] Tightened CLI output modes (`--plain`) and non-interactive behavior (`--no-input`)
+- [x] Clarified failure modes (added exit code for “needs render / JS-only”)
+- [x] Clarified Firecrawl endpoint auto-selection vs explicit opt-in (privacy surface)
+- [x] Expanded roadmap to include wrappers + eval harness
+
+#### Decisions
+- **[D6]** Add `--plain` as a stable piping mode (URLs one-per-line for search).
+- **[D7]** Gate remote/high-privacy-surface providers in `auto` by default; require explicit opt-in for remote/cloud endpoints.
+
+#### Next Steps
+1. Add Python package + CLI scaffold (uv, ruff, pyright, pytest)
+2. Implement baseline providers (keyless search + HTTP fetch + readability extraction)
+3. Decide the “good enough” keyless search baseline + default extraction shape (reader-mode vs doc-mode)
+
+---
+
 <!--
 =============================================================================
 SESSION TEMPLATE - Copy below this line for new sessions
