@@ -290,6 +290,24 @@ Further reduce duplication and keep command modules self-contained
 1. Decide policy semantics for `render` (especially `strict` vs `standard`) and implement `render-001`
 2. Add a minimal `pipeline` command contract (even if it’s just `search` + `extract` for top-1)
 
+---
+
+### Session 10 | 2026-01-06 | Commits: e4fc7a3..82e84b6
+
+#### Metadata
+- **Features**: docs-001 (progressed)
+- **Files Changed**:
+  - `LICENSE` - add MIT license text
+  - `README.md` - record license choice
+- **Commit Summary**: `docs: add MIT license`
+
+#### Goal
+Make the repository publishable with a clear OSS license
+
+#### Accomplished
+- [x] Added MIT `LICENSE`
+- [x] Updated README license section
+
 <!--
 =============================================================================
 SESSION TEMPLATE - Copy below this line for new sessions

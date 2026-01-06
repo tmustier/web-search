@@ -39,9 +39,15 @@
             "date": "2026-01-06",
             "action": "progressed",
             "summary": "Polished public-facing docs (README/spec/research) and added CONTRIBUTING/SECURITY files for OSS readiness"
+          },
+          {
+            "session": 10,
+            "date": "2026-01-06",
+            "action": "progressed",
+            "summary": "Selected MIT license and added `LICENSE` + updated README"
           }
         ],
-        "files": ["README.md", "docs/spec.md", "docs/research.md"],
+        "files": ["README.md", "docs/spec.md", "docs/research.md", "LICENSE"],
         "decisions": [
           {
             "session": 1,
