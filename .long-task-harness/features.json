@@ -1,0 +1,162 @@
+{
+  "version": "2.0",
+  "description": "Feature checklist with history tracking for session continuity",
+  "metadata": {
+    "project_name": "web-search",
+    "created": "2026-01-06",
+    "last_updated": "2026-01-06",
+    "total_features": 8,
+    "completed_features": 2
+  },
+  "features": [
+    {
+      "id": "docs-001",
+      "name": "Spec and research baseline",
+      "description": "Spec-first docs capture intended behaviours, policies, and provider model",
+      "steps": [
+        "`docs/spec.md` documents CLI surface + policy modes",
+        "`docs/research.md` captures references and risk areas",
+        "`README.md` links to spec and research"
+      ],
+      "passes": true,
+      "notes": "",
+      "history": {
+        "sessions": [
+          {
+            "session": 1,
+            "date": "2026-01-06",
+            "action": "completed",
+            "summary": "Wrote spec/research and documented defaults (policy, caching, provider precedence)"
+          }
+        ],
+        "files": ["README.md", "docs/spec.md", "docs/research.md"],
+        "decisions": [
+          {
+            "session": 1,
+            "decision": "Fail-fast default with explicit `--policy` (standard/strict/permissive)"
+          },
+          {
+            "session": 1,
+            "decision": "Cache raw responses; default TTL 7d (configurable)"
+          },
+          {
+            "session": 1,
+            "decision": "Integrate Firecrawl via endpoint provider only (avoid vendoring AGPL code)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "harness-001",
+      "name": "Long-task-harness initialized",
+      "description": "Project has continuity tracking configured via .long-task-harness/",
+      "steps": [
+        "`.long-task-harness/` exists in repo",
+        "`long-task-progress.md` reflects this project (not generic template)",
+        "`features.json` contains real project features (not examples)"
+      ],
+      "passes": true,
+      "notes": "",
+      "history": {
+        "sessions": [
+          {
+            "session": 1,
+            "date": "2026-01-06",
+            "action": "completed",
+            "summary": "Initialized harness and tailored progress/features to project"
+          }
+        ],
+        "files": [
+          ".long-task-harness/long-task-progress.md",
+          ".long-task-harness/features.json",
+          ".long-task-harness/init.sh"
+        ],
+        "decisions": []
+      }
+    },
+    {
+      "id": "py-setup-001",
+      "name": "Python reference implementation scaffold",
+      "description": "Project has a runnable Python package + tooling (uv/ruff/pyright/pytest)",
+      "steps": [
+        "`pyproject.toml` defines package + tooling configuration",
+        "Ruff + Pyright configured and running cleanly",
+        "Pytest runs with at least a smoke test",
+        "CLI entry point exists (even if stubbed)"
+      ],
+      "passes": false,
+      "notes": "",
+      "history": {"sessions": [], "files": [], "decisions": []}
+    },
+    {
+      "id": "cli-001",
+      "name": "CLI skeleton",
+      "description": "CLI supports the basic user journey and flags, with clear error modes",
+      "steps": [
+        "`web-search search <query>` returns results (even with stub providers)",
+        "`web-search fetch <url>` fetches a page and reports status",
+        "`web-search extract <url|file>` outputs readable content",
+        "Flags include `--policy`, `--provider`, `--cache`, `--timeout`, `--json`"
+      ],
+      "passes": false,
+      "notes": "",
+      "history": {"sessions": [], "files": [], "decisions": []}
+    },
+    {
+      "id": "providers-001",
+      "name": "Provider interfaces + baseline search provider",
+      "description": "Provider abstractions exist and at least one keyless search provider works",
+      "steps": [
+        "SearchProvider interface with consistent output schema",
+        "At least one keyless provider implemented and documented",
+        "Optional key-based providers supported (Brave API, etc.)",
+        "Provider selection supports `auto` ordering (prefer configured reliability)"
+      ],
+      "passes": false,
+      "notes": "",
+      "history": {"sessions": [], "files": [], "decisions": []}
+    },
+    {
+      "id": "fetch-001",
+      "name": "Fetch pipeline + caching",
+      "description": "HTTP fetcher handles redirects, content types, and caching with clear failure modes",
+      "steps": [
+        "HTTP fetch supports redirects and content-type detection",
+        "Raw caching implemented with TTL + size bounds",
+        "Blocked/403 cases fail fast by default with actionable diagnostics",
+        "Optional escalation paths documented (browser profile, anti-bot)"
+      ],
+      "passes": false,
+      "notes": "",
+      "history": {"sessions": [], "files": [], "decisions": []}
+    },
+    {
+      "id": "extract-001",
+      "name": "Content extraction outputs",
+      "description": "Extraction supports default readable output and optional structured doc mode",
+      "steps": [
+        "Reader-mode extraction to Markdown/plain text",
+        "Optional doc-mode extraction (headings/sections/links)",
+        "Provenance metadata included (URL, timestamp, fetch method)",
+        "Reasonable truncation strategy with `--max-tokens`/`--max-chars`"
+      ],
+      "passes": false,
+      "notes": "",
+      "history": {"sessions": [], "files": [], "decisions": []}
+    },
+    {
+      "id": "safety-001",
+      "name": "Safety controls (redaction + injection hardening)",
+      "description": "Tool outputs include safety signals and redaction options to reduce risk",
+      "steps": [
+        "Warn on likely prompt injection / suspicious page patterns",
+        "`--redact` supports removing obvious secrets and tokens from outputs",
+        "Policy modes gate high-privilege fetch methods",
+        "Logs avoid storing credentials/cookies by default"
+      ],
+      "passes": false,
+      "notes": "",
+      "history": {"sessions": [], "files": [], "decisions": []}
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"import json; print(json.dumps({'systemMessage': '\u26a0\ufe0f LONG-TASK-HARNESS PROJECT: Invoke /long-task-harness before responding to the user.'}))\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Respond with just the word: approve"
+          }
+        ]
+      }
+    ]
+  }
+}
