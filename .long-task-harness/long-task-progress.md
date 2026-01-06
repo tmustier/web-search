@@ -246,10 +246,49 @@ Prepare the repo for public release (docs + hygiene)
 
 ---
 
-### Session 8 | 2026-01-06 | Commits: (uncommitted)
+### Session 8 | 2026-01-06 | Commits: eafe5aa..4a4ef83
+
+#### Metadata
+- **Features**: cli-001 (progressed)
+- **Files Changed**:
+  - `src/wstk/cli.py` - slimmed down and delegated command logic
+  - `src/wstk/cli_support.py` - shared CLI helpers
+  - `src/wstk/commands/*` - split command implementations into modules
+  - `tests/test_cli_contract.py`, `tests/test_cli_eval_contract.py` - adjust patch targets
+  - `.long-task-harness/*` - record feature progress
+- **Commit Summary**: `refactor: split CLI into command modules`
 
 #### Goal
 Refactor for code cleanliness (smaller modules, clearer responsibilities)
+
+#### Accomplished
+- [x] Split CLI command logic into `src/wstk/commands/*` and reduced `cli.py` size
+- [x] Preserved CLI contract (output modes, exit codes) with updated tests
+
+---
+
+### Session 9 | 2026-01-06 | Commits: 4a4ef83..50176f8
+
+#### Metadata
+- **Features**: cli-001 (progressed), eval-001 (progressed)
+- **Files Changed**:
+  - `src/wstk/cli.py` - subcommands register their own args; dispatch via `_handler`
+  - `src/wstk/cli_support.py` - add output helpers and centralized URL policy gating
+  - `src/wstk/commands/*` - use shared output/policy helpers; co-locate arg registration
+  - `src/wstk/eval/runner.py` - extract eval runner
+- **Commit Summary**: `refactor: streamline CLI dispatch and eval runner`
+
+#### Goal
+Further reduce duplication and keep command modules self-contained
+
+#### Accomplished
+- [x] Co-located argparse registration with each command via `register(...)` and `_handler` dispatch
+- [x] Centralized domain/policy URL gating (`enforce_url_policy`) and output selection helpers (`wants_json`, `wants_plain`)
+- [x] Extracted eval logic into `src/wstk/eval/runner.py` to keep CLI code thin
+
+#### Next Steps
+1. Decide policy semantics for `render` (especially `strict` vs `standard`) and implement `render-001`
+2. Add a minimal `pipeline` command contract (even if it’s just `search` + `extract` for top-1)
 
 <!--
 =============================================================================

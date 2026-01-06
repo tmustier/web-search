@@ -148,6 +148,12 @@
             "date": "2026-01-06",
             "action": "progressed",
             "summary": "Refactored CLI into small command modules for readability while keeping the CLI contract stable"
+          },
+          {
+            "session": 9,
+            "date": "2026-01-06",
+            "action": "progressed",
+            "summary": "Centralized output-mode selection and URL policy gating, and extracted eval runner for reuse"
           }
         ],
         "files": [
@@ -288,6 +294,12 @@
             "date": "2026-01-06",
             "action": "progressed",
             "summary": "Implemented `wstk eval` (search-only), suite parsing (JSON/JSONL), scoring (hit@k/MRR/overlap), and contract/unit tests with a sample suite"
+          },
+          {
+            "session": 9,
+            "date": "2026-01-06",
+            "action": "progressed",
+            "summary": "Extracted search-eval runner into a reusable module and simplified the eval command implementation"
           }
         ],
         "files": [
