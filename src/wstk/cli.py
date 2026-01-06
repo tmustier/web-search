@@ -4,9 +4,10 @@ import argparse
 import sys
 import time
 from collections.abc import Callable
+from typing import cast
 
 from wstk import __version__
-from wstk.cli_support import add_global_flags, envelope_and_exit
+from wstk.cli_support import add_global_flags, envelope_and_exit, wants_json
 from wstk.commands import eval_cmd, extract_cmd, fetch_cmd, providers_cmd, search_cmd
 from wstk.errors import ExitCode, WstkError
 from wstk.output import EnvelopeMeta
@@ -23,115 +24,17 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=__version__)
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    subparsers.add_parser("providers", parents=[global_sub], help="List available providers")
-
-    search_p = subparsers.add_parser("search", parents=[global_sub], help="Search the web")
-    search_p.add_argument("query", type=str, help="Search query")
-    search_p.add_argument("-n", "--max-results", type=int, default=10, help="Maximum results")
-    search_p.add_argument(
-        "--time-range",
-        type=str,
-        default=None,
-        help="Time range (provider-specific)",
-    )
-    search_p.add_argument("--region", type=str, default=None, help="Region code (e.g. us-en)")
-    search_p.add_argument(
-        "--safe-search",
-        type=str,
-        choices=["on", "moderate", "off"],
-        default=None,
-        help="Safe search mode",
-    )
-    search_p.add_argument(
-        "--provider",
-        type=str,
-        default="auto",
-        help="Search provider (default: auto)",
-    )
-    search_p.add_argument(
-        "--include-raw", action="store_true", help="Include provider raw payload subset in JSON"
-    )
-
-    fetch_p = subparsers.add_parser("fetch", parents=[global_sub], help="Fetch a URL over HTTP")
-    fetch_p.add_argument("url", type=str, help="URL to fetch")
-    fetch_p.add_argument("--header", action="append", default=[], help="Extra header: key:value")
-    fetch_p.add_argument(
-        "--headers-file", type=str, default=None, help="JSON object of headers (path or '-')"
-    )
-    fetch_p.add_argument("--user-agent", type=str, default=None, help="User-Agent header")
-    fetch_p.add_argument("--accept-language", type=str, default=None, help="Accept-Language header")
-    fetch_p.add_argument(
-        "--max-bytes",
-        type=int,
-        default=5 * 1024 * 1024,
-        help="Max response bytes",
-    )
-    fetch_p.add_argument(
-        "--follow-redirects",
-        action="store_true",
-        default=True,
-        help="Follow redirects",
-    )
-    fetch_p.add_argument(
-        "--no-follow-redirects",
-        action="store_false",
-        dest="follow_redirects",
-        help="Do not follow redirects",
-    )
-    fetch_p.add_argument(
-        "--detect-blocks", action="store_true", default=True, help="Heuristics for bot walls/JS"
-    )
-    fetch_p.add_argument(
-        "--no-detect-blocks", action="store_false", dest="detect_blocks", help="Disable heuristics"
-    )
-    fetch_p.add_argument("--include-body", action="store_true", help="Include body in JSON (debug)")
-
-    extract_p = subparsers.add_parser(
-        "extract", parents=[global_sub], help="Extract readable content"
-    )
-    extract_p.add_argument("target", type=str, help="URL, path, or '-' for stdin")
-    extract_p.add_argument("--strategy", choices=["auto", "readability", "docs"], default="auto")
-    extract_p.add_argument("--method", choices=["http", "browser", "auto"], default="http")
-    out_group = extract_p.add_mutually_exclusive_group()
-    out_group.add_argument("--markdown", action="store_true", help="Output markdown only")
-    out_group.add_argument("--text", action="store_true", help="Output text only")
-    out_group.add_argument("--both", action="store_true", help="Output both markdown and text")
-    extract_p.add_argument("--max-chars", type=int, default=0, help="Truncate extracted output")
-    extract_p.add_argument(
-        "--include-html", action="store_true", help="Include HTML in JSON (debug)"
-    )
-
-    eval_p = subparsers.add_parser("eval", parents=[global_sub], help="Run an eval suite")
-    eval_p.add_argument("--suite", type=str, required=True, help="Suite file (JSON or JSONL)")
-    eval_p.add_argument(
-        "--provider",
-        action="append",
-        default=[],
-        help="Search provider(s) to run (repeatable; default: auto)",
-    )
-    eval_p.add_argument("-k", "--k", type=int, default=10, help="Top-k used for metrics")
-    eval_p.add_argument(
-        "--fail-on",
-        choices=["none", "error", "miss", "miss_or_error"],
-        default="error",
-        help="Return non-zero exit code when the run has misses/errors (default: error)",
-    )
-    eval_p.add_argument(
-        "--include-results", action="store_true", help="Include result items in JSON output"
-    )
+    parents = [global_sub]
+    providers_cmd.register(subparsers, parents=parents)
+    search_cmd.register(subparsers, parents=parents)
+    fetch_cmd.register(subparsers, parents=parents)
+    extract_cmd.register(subparsers, parents=parents)
+    eval_cmd.register(subparsers, parents=parents)
 
     return parser
 
 
 CommandHandler = Callable[..., int]
-_COMMANDS: dict[str, CommandHandler] = {
-    "providers": providers_cmd.run,
-    "search": search_cmd.run,
-    "fetch": fetch_cmd.run,
-    "extract": extract_cmd.run,
-    "eval": eval_cmd.run,
-}
-
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
@@ -142,8 +45,8 @@ def main(argv: list[str] | None = None) -> int:
     warnings: list[str] = []
 
     try:
-        handler = _COMMANDS.get(command)
-        if handler is None:
+        handler = cast(CommandHandler | None, getattr(args, "_handler", None))
+        if handler is None:  # pragma: no cover
             raise WstkError(
                 code="invalid_usage",
                 message=f"unknown command: {command}",
@@ -152,7 +55,7 @@ def main(argv: list[str] | None = None) -> int:
         return handler(args=args, start=start, warnings=warnings)
     except WstkError as e:
         meta = EnvelopeMeta(duration_ms=int((time.time() - start) * 1000))
-        if args.json or args.pretty:
+        if wants_json(args):
             return envelope_and_exit(
                 args=args,
                 command=command,

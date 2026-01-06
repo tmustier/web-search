@@ -7,15 +7,33 @@ from pathlib import Path
 
 from wstk.cli_support import (
     cache_from_args,
-    domain_rules_from_args,
+    enforce_url_policy,
     envelope_and_exit,
     parse_headers,
+    wants_json,
+    wants_plain,
 )
 from wstk.errors import ExitCode, WstkError
 from wstk.extract.readability_extractor import extract_readability
 from wstk.fetch.http import FetchSettings, fetch_url
 from wstk.output import CacheMeta, EnvelopeMeta
-from wstk.urlutil import is_allowed
+
+
+def register(
+    subparsers: argparse._SubParsersAction, *, parents: list[argparse.ArgumentParser]
+) -> None:
+    p = subparsers.add_parser("extract", parents=parents, help="Extract readable content")
+    p.set_defaults(_handler=run)
+
+    p.add_argument("target", type=str, help="URL, path, or '-' for stdin")
+    p.add_argument("--strategy", choices=["auto", "readability", "docs"], default="auto")
+    p.add_argument("--method", choices=["http", "browser", "auto"], default="http")
+    out_group = p.add_mutually_exclusive_group()
+    out_group.add_argument("--markdown", action="store_true", help="Output markdown only")
+    out_group.add_argument("--text", action="store_true", help="Output text only")
+    out_group.add_argument("--both", action="store_true", help="Output both markdown and text")
+    p.add_argument("--max-chars", type=int, default=0, help="Truncate extracted output")
+    p.add_argument("--include-html", action="store_true", help="Include HTML in JSON (debug)")
 
 
 def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
@@ -42,22 +60,9 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
             exit_code=ExitCode.RUNTIME_ERROR,
         )
 
-    rules = domain_rules_from_args(args)
     cache_meta = None
     if target.startswith(("http://", "https://")):
-        if args.policy == "strict" and not rules.allow:
-            raise WstkError(
-                code="policy_violation",
-                message="strict policy requires --allow-domain for network extract",
-                exit_code=ExitCode.INVALID_USAGE,
-            )
-        if (rules.allow or rules.block) and not is_allowed(target, rules):
-            raise WstkError(
-                code="domain_blocked",
-                message="URL blocked by domain rules",
-                exit_code=ExitCode.INVALID_USAGE,
-                details={"url": target},
-            )
+        enforce_url_policy(args=args, url=target, operation="extract")
 
         headers = parse_headers(args)
         cache = cache_from_args(args)
@@ -101,7 +106,7 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
             text=text,
         )
 
-    if args.plain and not (args.json or args.pretty):
+    if wants_plain(args):
         if args.text and extracted.text:
             sys.stdout.write(extracted.text)
             if not extracted.text.endswith("\n"):
@@ -118,7 +123,7 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
             sys.stdout.write("\n")
         return ExitCode.OK if content else ExitCode.NOT_FOUND
 
-    if not (args.json or args.pretty):
+    if not wants_json(args):
         content = extracted.markdown if include_markdown else extracted.text
         content = content or extracted.text or extracted.markdown or ""
         sys.stdout.write(content)

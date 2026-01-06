@@ -10,7 +10,15 @@ from wstk.cache import Cache, CacheSettings
 from wstk.errors import ExitCode, WstkError
 from wstk.output import EnvelopeMeta, make_envelope, print_json
 from wstk.timeutil import parse_duration
-from wstk.urlutil import DomainRules
+from wstk.urlutil import DomainRules, is_allowed
+
+
+def wants_json(args: argparse.Namespace) -> bool:
+    return bool(getattr(args, "json", False) or getattr(args, "pretty", False))
+
+
+def wants_plain(args: argparse.Namespace) -> bool:
+    return bool(getattr(args, "plain", False) and not wants_json(args))
 
 
 def add_global_flags(parser: argparse.ArgumentParser, *, suppress_defaults: bool) -> None:
@@ -145,6 +153,23 @@ def domain_rules_from_args(args: argparse.Namespace) -> DomainRules:
     return DomainRules(allow=allow, block=block)
 
 
+def enforce_url_policy(*, args: argparse.Namespace, url: str, operation: str) -> None:
+    rules = domain_rules_from_args(args)
+    if args.policy == "strict" and not rules.allow:
+        raise WstkError(
+            code="policy_violation",
+            message=f"strict policy requires --allow-domain for network {operation}",
+            exit_code=ExitCode.INVALID_USAGE,
+        )
+    if (rules.allow or rules.block) and not is_allowed(url, rules):
+        raise WstkError(
+            code="domain_blocked",
+            message="URL blocked by domain rules",
+            exit_code=ExitCode.INVALID_USAGE,
+            details={"url": url},
+        )
+
+
 def cache_from_args(args: argparse.Namespace) -> Cache:
     cache_dir = Path(str(args.cache_dir)).expanduser()
     ttl = parse_duration(str(args.cache_ttl))
@@ -217,10 +242,9 @@ def parse_headers(args: argparse.Namespace) -> dict[str, str]:
 
 
 def print_envelope(args: argparse.Namespace, payload: dict) -> None:
-    use_json = bool(args.json or args.pretty)
-    if not use_json:
+    if not wants_json(args):
         return
-    print_json(payload, pretty=bool(args.pretty))
+    print_json(payload, pretty=bool(getattr(args, "pretty", False)))
 
 
 def envelope_and_exit(
@@ -244,4 +268,3 @@ def envelope_and_exit(
     )
     print_envelope(args, payload)
     return ExitCode.OK if ok else (error.exit_code if error is not None else ExitCode.RUNTIME_ERROR)
-

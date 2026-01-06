@@ -4,9 +4,16 @@ import argparse
 import time
 
 import wstk.search.registry as search_registry
-from wstk.cli_support import envelope_and_exit
+from wstk.cli_support import envelope_and_exit, wants_json, wants_plain
 from wstk.errors import ExitCode
 from wstk.output import EnvelopeMeta
+
+
+def register(
+    subparsers: argparse._SubParsersAction, *, parents: list[argparse.ArgumentParser]
+) -> None:
+    p = subparsers.add_parser("providers", parents=parents, help="List available providers")
+    p.set_defaults(_handler=run)
 
 
 def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
@@ -37,12 +44,12 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
         }
     )
 
-    if args.plain and not (args.json or args.pretty):
+    if wants_plain(args):
         for item in providers_data:
             print(item["id"])
         return ExitCode.OK
 
-    if not (args.json or args.pretty):
+    if not wants_json(args):
         for item in providers_data:
             status = "enabled" if item["enabled"] else f"disabled ({item['reason']})"
             print(f"{item['type']}: {item['id']} - {status}")

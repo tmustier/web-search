@@ -5,32 +5,64 @@ import time
 
 from wstk.cli_support import (
     cache_from_args,
-    domain_rules_from_args,
+    enforce_url_policy,
     envelope_and_exit,
     parse_headers,
+    wants_json,
+    wants_plain,
 )
-from wstk.errors import ExitCode, WstkError
+from wstk.errors import ExitCode
 from wstk.fetch.http import FetchSettings, fetch_url
 from wstk.output import CacheMeta, EnvelopeMeta
-from wstk.urlutil import is_allowed
+
+
+def register(
+    subparsers: argparse._SubParsersAction, *, parents: list[argparse.ArgumentParser]
+) -> None:
+    p = subparsers.add_parser("fetch", parents=parents, help="Fetch a URL over HTTP")
+    p.set_defaults(_handler=run)
+
+    p.add_argument("url", type=str, help="URL to fetch")
+    p.add_argument("--header", action="append", default=[], help="Extra header: key:value")
+    p.add_argument(
+        "--headers-file",
+        type=str,
+        default=None,
+        help="JSON object of headers (path or '-')",
+    )
+    p.add_argument("--user-agent", type=str, default=None, help="User-Agent header")
+    p.add_argument("--accept-language", type=str, default=None, help="Accept-Language header")
+    p.add_argument(
+        "--max-bytes",
+        type=int,
+        default=5 * 1024 * 1024,
+        help="Max response bytes",
+    )
+    p.add_argument("--follow-redirects", action="store_true", default=True, help="Follow redirects")
+    p.add_argument(
+        "--no-follow-redirects",
+        action="store_false",
+        dest="follow_redirects",
+        help="Do not follow redirects",
+    )
+    p.add_argument(
+        "--detect-blocks",
+        action="store_true",
+        default=True,
+        help="Heuristics for bot walls/JS",
+    )
+    p.add_argument(
+        "--no-detect-blocks",
+        action="store_false",
+        dest="detect_blocks",
+        help="Disable heuristics",
+    )
+    p.add_argument("--include-body", action="store_true", help="Include body in JSON (debug)")
 
 
 def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
     url = str(args.url)
-    rules = domain_rules_from_args(args)
-    if args.policy == "strict" and not rules.allow:
-        raise WstkError(
-            code="policy_violation",
-            message="strict policy requires --allow-domain for network fetch",
-            exit_code=ExitCode.INVALID_USAGE,
-        )
-    if (rules.allow or rules.block) and not is_allowed(url, rules):
-        raise WstkError(
-            code="domain_blocked",
-            message="URL blocked by domain rules",
-            exit_code=ExitCode.INVALID_USAGE,
-            details={"url": url},
-        )
+    enforce_url_policy(args=args, url=url, operation="fetch")
 
     headers = parse_headers(args)
     cache = cache_from_args(args)
@@ -45,7 +77,7 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
     )
     res = fetch_url(url, settings=fetch_settings)
 
-    if args.plain and not (args.json or args.pretty):
+    if wants_plain(args):
         if res.document.artifact and res.document.artifact.body_path:
             print(res.document.artifact.body_path)
         else:
@@ -66,7 +98,7 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
         providers=["http"],
     )
 
-    if not (args.json or args.pretty):
+    if not wants_json(args):
         http_info = res.document.http
         artifact = res.document.artifact
         status = http_info.status if http_info else "unknown"
