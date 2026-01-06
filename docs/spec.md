@@ -509,9 +509,13 @@ Alternatives we may want later:
 
 ### Tooling (proposed)
 
+- Dependency management / runner: `uv` (fast, reproducible, simple)
 - Type checking: `pyright` (fast, good editor support; treat type errors as CI failures)
 - Lint/format: `ruff` (format + lint; keep rules minimal at first)
 - Tests: `pytest` (focus on CLI contract + provider selection + caching behaviors)
+- Pre-commit: `pre-commit` hooks for `ruff` + `pyright` (keep local + CI aligned)
+- CI: GitHub Actions running `ruff`, `pyright`, `pytest` on PRs
+- Coverage (optional): `pytest-cov` with a soft floor initially (avoid blocking early refactors)
 
 ## 13) Open questions (to resolve with you)
 
