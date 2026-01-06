@@ -300,8 +300,8 @@ Default resolution for `extract <url>`:
 Default resolution for `pipeline "<query>"`:
 
 1. `search` with provider `auto`:
-   - if keys available: prefer paid/official API providers
-   - else: keyless providers
+   - prefer the most reliable configured provider(s) (API keys / local services / endpoints the user explicitly set up)
+   - fall back to best-effort keyless providers if nothing is configured
 2. apply domain preferences (allow/block/site)
 3. optionally extract top results (bounded by `--extract-k`, `--method`, and future `--escalate`)
 
@@ -313,8 +313,40 @@ Providers are optional and discovered at runtime.
 
 - `ddgs` (keyless; multi-backend where supported)
 - `brave_api` (optional key; stable)
+- `firecrawl_endpoint` (optional endpoint + key; can provide search and/or extraction depending on server capabilities)
 - `tavily` / `serper` / `bing` (optional keys; future)
 - `searxng_local` (optional; requires local service)
+
+### Provider `auto` default ordering (search)
+
+When multiple search providers are enabled and `--provider auto` is used, the built-in default order should prefer reliability *when configured*:
+
+1. `brave_api` (if `BRAVE_API_KEY` configured)
+2. `searxng_local` (if base URL configured and reachable)
+3. `firecrawl_endpoint` (if base URL configured; key optional depending on deployment)
+4. `ddgs` (best-effort keyless fallback)
+
+Users must be able to override this order in config.
+
+### `firecrawl_endpoint` provider (optional)
+
+This is an optional integration with a **Firecrawl-compatible HTTP endpoint** (cloud or self-hosted) to improve success rates on difficult sites (dynamic content, blocks, etc.) without embedding Firecrawl code in this repo.
+
+Configuration (suggested):
+
+- `FIRECRAWL_BASE_URL` (required): e.g. `https://api.firecrawl.dev` or a self-hosted URL
+- `FIRECRAWL_API_KEY` (optional): if required by the endpoint; never passed via CLI flags
+
+Behavior expectations:
+
+- Treated as a remote provider: it may send URLs (and possibly retrieved page content) to a third-party service depending on deployment; emit clear metadata about when it was used.
+- Never used implicitly in `standard` policy. Use only when:
+  - explicitly selected with `--provider firecrawl_endpoint`, or
+  - explicitly enabled as an escalation path under `permissive` (future).
+
+License note:
+
+- Firecrawl’s OSS backend is AGPL-3.0; do not vendor/embed it here. An endpoint integration keeps this project’s licensing independent.
 
 ### Fetch/render providers
 
@@ -325,6 +357,7 @@ Providers are optional and discovered at runtime.
 
 - readability-style extractor (good for articles)
 - docs extractor (preserve headings, code blocks, nav pruning tuned for docs)
+- optional “remote extractor” providers (e.g. Firecrawl endpoint) as explicit opt-ins
 
 ## 9) Configuration
 
@@ -340,6 +373,19 @@ Providers are optional and discovered at runtime.
 ### Secrets
 
 Never accept secrets via CLI flags. Use env vars or keychain integration (optional).
+
+### Provider selection and precedence
+
+Each subcommand that supports `--provider auto` should use a deterministic priority order:
+
+1. provider explicitly set by CLI flag
+2. provider explicitly set in project config (`.wstk.toml`)
+3. provider explicitly set in user config (`~/.config/wstk/config.toml`)
+4. built-in defaults:
+   - prefer configured “reliability” providers (API keys / local services / endpoints)
+   - fall back to keyless providers
+
+Users should be able to reorder provider preference (globally or per command) via config.
 
 ## 10) Safety + policy
 
@@ -376,6 +422,7 @@ Goal: work well for day-to-day agent research without surprising behavior.
   - emit a warning when URLs look secret-bearing (e.g., OAuth code / signed URL patterns)
 - Privileged browsing (session reuse): supported but opt-in (`render --profile/--use-system-profile`).
   - When a real profile/session is used, default to **no cache writes** unless explicitly overridden (to reduce accidental retention of private/authenticated content).
+- Remote extraction providers (e.g. Firecrawl endpoint): available, but not automatically used (agents must opt in via `--provider` or permissive escalation).
 
 #### `strict` (compliance-focused)
 
@@ -393,6 +440,7 @@ Goal: maximize one-shot success when the user accepts higher unpredictability an
 
 - Allows opt-in “auto escalation” flows (e.g. `--method auto` or future `--escalate=render`).
 - May allow additional compatibility tactics (retries/backoff; alternate representations like `?output=1`, print views) while staying bounded by budgets.
+- May optionally use configured remote extraction providers as an explicit escalation path (still bounded by budgets and never the default path).
 - Any “stealth/bypass” tactics must be explicit, isolated, and budgeted (see below).
 
 ### Content access policy
@@ -442,14 +490,22 @@ Progressive disclosure approach:
 - `references/`: provider-specific behavior, troubleshooting 403/JS, evaluation playbook.
 - `scripts/`: small deterministic helpers (e.g., normalize URL, detect JS shell, boilerplate scoring).
 
-## 12) Implementation choices (TBD)
+## 12) Implementation choices
 
-Two plausible stacks:
+### Reference implementation language (proposed)
 
-1. **Python + uv** (pros: great CLI ergonomics, ddgs/httpx, easy packaging, Playwright python; consistent with existing keyless tooling).
-2. **Node** (pros: reuse Readability/Turndown code; align with existing brave-search; but multi-provider + packaging can be heavier).
+**Python** as the reference implementation, with a stable CLI+JSON contract so additional implementations can exist later.
 
-We’ll decide after clarifying requirements: distribution, runtime constraints, and desired extraction quality.
+Rationale (outcome-focused):
+
+- Fastest path to a “works everywhere” local tool with minimal integration friction for agents (good CLI ergonomics, strong HTTP ecosystem, easy plugin boundaries).
+- Easiest to keep the core lightweight while making heavy features (JS rendering, browser automation) optional.
+- Keeps future options open: once the interface is proven, a Go/Rust single-binary rewrite is straightforward because the contract is already defined and testable.
+
+Alternatives we may want later:
+
+- **TypeScript/Node**: strong for reusing existing Readability/Turndown patterns and Playwright, but tends to pull a heavier dependency graph by default and can be harder to keep “optional”.
+- **Go/Rust**: great for distribution (single binary) and performance, but you still need an external browser engine for JS rendering and a solid extraction stack; better as a follow-on once behavior is validated.
 
 ## 13) Open questions (to resolve with you)
 
