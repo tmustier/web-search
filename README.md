@@ -49,7 +49,7 @@ Eval:
 
 ## License
 
-TBD (choose a license before making the repo public).
+MIT (see `LICENSE`).
 
 ## Contributing
 
