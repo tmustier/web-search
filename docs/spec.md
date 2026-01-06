@@ -54,7 +54,7 @@ We want a single toolkit with:
 ## 4) User stories
 
 - As an agent, I can search for documentation and get stable JSON results, optionally scoped to domains and time windows.
-- As an agent, I can fetch and extract readable content from a URL, automatically choosing HTTP vs rendered browsing.
+- As an agent, I can fetch and extract readable content from a URL, with an explicit escalation path from HTTP → rendered browsing when needed.
 - As a user, I can run the same query later and see what changed (cache/evidence).
 - As a user, I can configure preferred providers and keys once; the toolkit uses them automatically.
 - As an agent author, I can add a new search provider without changing downstream code.
