@@ -4,16 +4,21 @@ import argparse
 import json
 import sys
 import time
+from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlencode
 
 from wstk import __version__
-from wstk.cache import Cache, CacheSettings
+from wstk.cache import Cache, CacheSettings, make_cache_key
 from wstk.errors import ExitCode, WstkError
+from wstk.eval.scoring import normalize_url_for_match, score_search_results
+from wstk.eval.suite import EvalCase, load_suite
 from wstk.extract.readability_extractor import extract_readability
 from wstk.fetch.http import FetchSettings, fetch_url
 from wstk.output import CacheMeta, EnvelopeMeta, make_envelope, print_json
+from wstk.search.base import SearchProvider
 from wstk.search.registry import list_search_providers, select_search_provider
-from wstk.search.types import SearchQuery
+from wstk.search.types import SearchQuery, SearchResultItem
 from wstk.timeutil import parse_duration
 from wstk.urlutil import DomainRules, is_allowed, redact_url
 
@@ -223,6 +228,25 @@ def build_parser() -> argparse.ArgumentParser:
         "--include-html", action="store_true", help="Include HTML in JSON (debug)"
     )
 
+    eval_p = subparsers.add_parser("eval", parents=[global_sub], help="Run an eval suite")
+    eval_p.add_argument("--suite", type=str, required=True, help="Suite file (JSON or JSONL)")
+    eval_p.add_argument(
+        "--provider",
+        action="append",
+        default=[],
+        help="Search provider(s) to run (repeatable; default: auto)",
+    )
+    eval_p.add_argument("-k", "--k", type=int, default=10, help="Top-k used for metrics")
+    eval_p.add_argument(
+        "--fail-on",
+        choices=["none", "error", "miss", "miss_or_error"],
+        default="error",
+        help="Return non-zero exit code when the run has misses/errors (default: error)",
+    )
+    eval_p.add_argument(
+        "--include-results", action="store_true", help="Include result items in JSON output"
+    )
+
     return parser
 
 
@@ -310,6 +334,84 @@ def _print_envelope(args: argparse.Namespace, payload: dict) -> None:
     print_json(payload, pretty=bool(args.pretty))
 
 
+def _search_item_from_dict(raw: object, *, fallback_provider: str) -> SearchResultItem | None:
+    if not isinstance(raw, dict):
+        return None
+    title = raw.get("title")
+    url = raw.get("url")
+    if not isinstance(title, str) or not isinstance(url, str):
+        return None
+    if not title.strip() or not url.strip():
+        return None
+
+    snippet = raw.get("snippet")
+    published_at = raw.get("published_at")
+    source_provider = raw.get("source_provider")
+    score = raw.get("score")
+    raw_payload = raw.get("raw")
+
+    return SearchResultItem(
+        title=title.strip(),
+        url=url.strip(),
+        snippet=str(snippet) if isinstance(snippet, str) and snippet.strip() else None,
+        published_at=str(published_at)
+        if isinstance(published_at, str) and published_at.strip()
+        else None,
+        source_provider=str(source_provider)
+        if isinstance(source_provider, str) and source_provider.strip()
+        else fallback_provider,
+        score=float(score) if isinstance(score, (int, float)) else None,
+        raw=raw_payload if isinstance(raw_payload, dict) else None,
+    )
+
+
+@dataclass(slots=True)
+class _EvalProviderStats:
+    cases_total: int = 0
+    criteria_cases: int = 0
+    hit_cases: int = 0
+    mrr_sum: float = 0.0
+    errors: int = 0
+
+
+@dataclass(frozen=True, slots=True)
+class _EvalProviderSummary:
+    provider: str
+    cases_total: int
+    criteria_cases: int
+    hit_cases: int
+    hit_rate: float
+    mrr: float
+    errors: int
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "provider": self.provider,
+            "cases_total": self.cases_total,
+            "criteria_cases": self.criteria_cases,
+            "hit_cases": self.hit_cases,
+            "hit_rate": self.hit_rate,
+            "mrr": self.mrr,
+            "errors": self.errors,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class _EvalOverlapSummary:
+    a: str
+    b: str
+    avg_jaccard: float
+    cases: int
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "a": self.a,
+            "b": self.b,
+            "avg_jaccard": self.avg_jaccard,
+            "cases": self.cases,
+        }
+
+
 def _envelope_and_exit(
     *,
     args: argparse.Namespace,
@@ -343,11 +445,11 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if command == "providers":
-            providers = []
+            providers_data: list[dict[str, object]] = []
 
             for p in list_search_providers(timeout=float(args.timeout), proxy=args.proxy):
                 enabled, reason = p.is_enabled()
-                providers.append(
+                providers_data.append(
                     {
                         "id": p.id,
                         "type": "search",
@@ -357,10 +459,10 @@ def main(argv: list[str] | None = None) -> int:
                     }
                 )
 
-            providers.append(
+            providers_data.append(
                 {"id": "http", "type": "fetch", "enabled": True, "reason": None, "required_env": []}
             )
-            providers.append(
+            providers_data.append(
                 {
                     "id": "readability",
                     "type": "extract",
@@ -371,25 +473,25 @@ def main(argv: list[str] | None = None) -> int:
             )
 
             if args.plain and not (args.json or args.pretty):
-                for item in providers:
+                for item in providers_data:
                     print(item["id"])
                 return ExitCode.OK
 
             if not (args.json or args.pretty):
-                for item in providers:
+                for item in providers_data:
                     status = "enabled" if item["enabled"] else f"disabled ({item['reason']})"
                     print(f"{item['type']}: {item['id']} - {status}")
                 return ExitCode.OK
 
             meta = EnvelopeMeta(
                 duration_ms=int((time.time() - start) * 1000),
-                providers=[p["id"] for p in providers],
+                providers=[str(p["id"]) for p in providers_data],
             )
             return _envelope_and_exit(
                 args=args,
                 command=command,
                 ok=True,
-                data={"providers": providers},
+                data={"providers": providers_data},
                 warnings=warnings,
                 error=None,
                 meta=meta,
@@ -676,6 +778,324 @@ def main(argv: list[str] | None = None) -> int:
                 data={"document": doc_dict},
                 warnings=warnings,
                 error=None,
+                meta=meta,
+            )
+
+        if command == "eval":
+            suite = load_suite(str(args.suite))
+            requested_provider_ids = tuple(getattr(args, "provider", []) or ["auto"])
+
+            eval_providers: list[tuple[str, SearchProvider]] = []
+            eval_provider_ids: list[str] = []
+            for requested_id in requested_provider_ids:
+                provider, provider_meta = select_search_provider(
+                    str(requested_id), timeout=float(args.timeout), proxy=args.proxy
+                )
+                resolved_id = provider_meta[0] if provider_meta else provider.id
+                if resolved_id in eval_provider_ids:
+                    continue
+                enabled, reason = provider.is_enabled()
+                if not enabled:
+                    raise WstkError(
+                        code="provider_disabled",
+                        message=f"provider disabled: {resolved_id} ({reason})",
+                        exit_code=ExitCode.INVALID_USAGE,
+                    )
+                eval_providers.append((resolved_id, provider))
+                eval_provider_ids.append(resolved_id)
+
+            cache = _cache_from_args(args)
+            rules = _domain_rules_from_args(args)
+
+            cache_reads = 0
+            cache_hits = 0
+            cache_writes = 0
+
+            any_error = False
+            any_miss = False
+
+            per_provider_stats = {pid: _EvalProviderStats() for pid in eval_provider_ids}
+            url_sets: dict[tuple[str, str], set[str]] = {}
+
+            def criterion_for_case(case: EvalCase) -> str:
+                if case.expected_urls:
+                    return "url"
+                if case.expected_domains:
+                    return "domain"
+                return "none"
+
+            cases_out: list[dict] = []
+
+            for case in suite.cases:
+                case_k = int(case.k or args.k)
+                criterion = criterion_for_case(case)
+                case_by_provider: dict[str, object] = {}
+                case_entry: dict[str, object] = {
+                    "id": case.id,
+                    "query": case.query,
+                    "expected_domains": list(case.expected_domains),
+                    "expected_urls": list(case.expected_urls),
+                    "k": case_k,
+                    "by_provider": case_by_provider,
+                }
+
+                for pid, provider in eval_providers:
+                    stats = per_provider_stats[pid]
+                    stats.cases_total += 1
+                    if criterion != "none":
+                        stats.criteria_cases += 1
+
+                    query = SearchQuery(
+                        query=case.query,
+                        max_results=case_k,
+                        region=None,
+                        safe_search=None,
+                        time_range=None,
+                    )
+                    key_url_params = {"q": query.query, "n": query.max_results}
+                    key_url = f"wstk://search/{pid}?{urlencode(key_url_params)}"
+                    key = make_cache_key(key_url)
+
+                    t0 = time.time()
+                    cache_reads += 1
+                    hit = cache.get(key=key)
+                    cached_payload = None
+                    if hit is not None:
+                        cache_hits += 1
+                        try:
+                            cached_payload = json.loads(
+                                hit.body_path.read_bytes().decode("utf-8", errors="replace")
+                            )
+                        except Exception:
+                            cached_payload = None
+
+                    results: list[SearchResultItem] = []
+                    results_dicts: list[dict] = []
+
+                    if isinstance(cached_payload, list):
+                        for item in cached_payload:
+                            parsed = _search_item_from_dict(item, fallback_provider=pid)
+                            if parsed is None:
+                                continue
+                            results.append(parsed)
+                            results_dicts.append(parsed.to_dict())
+                    else:
+                        try:
+                            provider_results = provider.search(query, include_raw=False)
+                        except WstkError as e:
+                            any_error = True
+                            stats.errors += 1
+                            case_by_provider[pid] = {"error": e.to_error_dict()}
+                            continue
+                        except Exception as e:  # pragma: no cover
+                            any_error = True
+                            stats.errors += 1
+                            case_by_provider[pid] = {
+                                "error": {
+                                    "code": "unexpected_error",
+                                    "message": str(e),
+                                    "details": None,
+                                }
+                            }
+                            continue
+
+                        results = list(provider_results)
+                        results_dicts = [r.to_dict() for r in provider_results]
+                        cache.put(
+                            key=key,
+                            meta={"kind": "search", "provider": pid},
+                            body=json.dumps(results_dicts, ensure_ascii=False).encode("utf-8"),
+                        )
+                        cache_writes += 1
+
+                    duration_ms = int((time.time() - t0) * 1000)
+
+                    filtered_results: list[SearchResultItem] = []
+                    filtered_dicts: list[dict] = []
+                    for r in results:
+                        if (rules.allow or rules.block) and not is_allowed(r.url, rules):
+                            continue
+                        url = redact_url(r.url) if args.redact else r.url
+                        filtered_results.append(
+                            SearchResultItem(
+                                title=r.title,
+                                url=url,
+                                snippet=r.snippet,
+                                published_at=r.published_at,
+                                source_provider=r.source_provider,
+                                score=r.score,
+                                raw=r.raw,
+                            )
+                        )
+
+                    for d in results_dicts:
+                        url = d.get("url")
+                        if not isinstance(url, str):
+                            continue
+                        if (rules.allow or rules.block) and not is_allowed(url, rules):
+                            continue
+                        if args.redact:
+                            d = {**d, "url": redact_url(url)}
+                        filtered_dicts.append(d)
+
+                    score = score_search_results(
+                        filtered_results,
+                        expected_domains=case.expected_domains,
+                        expected_urls=case.expected_urls,
+                        k=case_k,
+                    )
+
+                    passed = True
+                    if criterion == "url":
+                        passed = bool(score.url_hit)
+                    elif criterion == "domain":
+                        passed = bool(score.domain_hit)
+
+                    if criterion != "none":
+                        if passed:
+                            stats.hit_cases += 1
+                        else:
+                            any_miss = True
+                        rr = score.url_mrr if criterion == "url" else score.domain_mrr
+                        stats.mrr_sum += float(rr)
+
+                    url_sets[(case.id, pid)] = {
+                        normalize_url_for_match(r.url) for r in filtered_results[:case_k]
+                    }
+
+                    provider_entry: dict[str, object] = {
+                        "criterion": criterion,
+                        "passed": passed,
+                        "duration_ms": duration_ms,
+                        "score": score.to_dict(),
+                    }
+                    if args.include_results:
+                        provider_entry["results"] = filtered_dicts[:case_k]
+                    case_by_provider[pid] = provider_entry
+
+                cases_out.append(case_entry)
+
+            provider_summaries: list[_EvalProviderSummary] = []
+            for pid in eval_provider_ids:
+                stats = per_provider_stats[pid]
+                criteria_cases = stats.criteria_cases
+                hit_cases = stats.hit_cases
+                hit_rate = 0.0 if criteria_cases == 0 else hit_cases / float(criteria_cases)
+                mrr = 0.0 if criteria_cases == 0 else stats.mrr_sum / float(criteria_cases)
+                provider_summaries.append(
+                    _EvalProviderSummary(
+                        provider=pid,
+                        cases_total=stats.cases_total,
+                        criteria_cases=criteria_cases,
+                        hit_cases=hit_cases,
+                        hit_rate=hit_rate,
+                        mrr=mrr,
+                        errors=stats.errors,
+                    )
+                )
+
+            overlap_summaries: list[_EvalOverlapSummary] = []
+            if len(eval_provider_ids) >= 2:
+                for i, a in enumerate(eval_provider_ids):
+                    for b in eval_provider_ids[i + 1 :]:
+                        values: list[float] = []
+                        for case in suite.cases:
+                            a_set = url_sets.get((case.id, a), set())
+                            b_set = url_sets.get((case.id, b), set())
+                            union = a_set | b_set
+                            if not union:
+                                continue
+                            values.append(len(a_set & b_set) / float(len(union)))
+                        avg_jaccard = 0.0 if not values else sum(values) / float(len(values))
+                        overlap_summaries.append(
+                            _EvalOverlapSummary(
+                                a=a,
+                                b=b,
+                                avg_jaccard=avg_jaccard,
+                                cases=len(values),
+                            )
+                        )
+
+            report = {
+                "suite": {"path": suite.path, "case_count": len(suite.cases)},
+                "settings": {
+                    "providers": list(eval_provider_ids),
+                    "k": int(args.k),
+                    "fail_on": str(args.fail_on),
+                },
+                "summary": {
+                    "by_provider": [s.to_dict() for s in provider_summaries],
+                    "overlap": [o.to_dict() for o in overlap_summaries],
+                    "cache": {"reads": cache_reads, "hits": cache_hits, "writes": cache_writes},
+                },
+                "cases": cases_out,
+            }
+
+            failed = False
+            if args.fail_on in {"error", "miss_or_error"} and any_error:
+                failed = True
+            if args.fail_on in {"miss", "miss_or_error"} and any_miss:
+                failed = True
+
+            if args.plain and not (args.json or args.pretty):
+                for row in provider_summaries:
+                    print(
+                        "\t".join(
+                            [
+                                row.provider,
+                                f"{row.hit_rate:.3f}",
+                                f"{row.mrr:.3f}",
+                                str(row.hit_cases),
+                                str(row.criteria_cases),
+                                str(row.errors),
+                            ]
+                        )
+                    )
+                if failed:
+                    print("eval failed", file=sys.stderr)
+                    return ExitCode.RUNTIME_ERROR
+                return ExitCode.OK
+
+            if not (args.json or args.pretty):
+                print(f"suite: {suite.path} ({len(suite.cases)} cases, k={int(args.k)})")
+                for row in provider_summaries:
+                    print(
+                        f"{row.provider}: hit@k {row.hit_cases}/{row.criteria_cases} "
+                        f"({row.hit_rate:.3f}), mrr {row.mrr:.3f}, errors {row.errors}"
+                    )
+                if failed:
+                    print("eval failed", file=sys.stderr)
+                    return ExitCode.RUNTIME_ERROR
+                return ExitCode.OK
+
+            meta = EnvelopeMeta(
+                duration_ms=int((time.time() - start) * 1000),
+                providers=list(eval_provider_ids),
+            )
+            if not failed:
+                return _envelope_and_exit(
+                    args=args,
+                    command=command,
+                    ok=True,
+                    data=report,
+                    warnings=warnings,
+                    error=None,
+                    meta=meta,
+                )
+
+            err = WstkError(
+                code="eval_failed",
+                message="eval failed",
+                exit_code=ExitCode.RUNTIME_ERROR,
+                details={"miss": any_miss, "error": any_error, "fail_on": str(args.fail_on)},
+            )
+            return _envelope_and_exit(
+                args=args,
+                command=command,
+                ok=False,
+                data=report,
+                warnings=warnings,
+                error=err,
                 meta=meta,
             )
 

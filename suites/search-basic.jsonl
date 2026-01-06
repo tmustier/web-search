@@ -1,0 +1,14 @@
+# Basic "dev docs" smoke suite.
+# Notes:
+# - Live web search changes; treat as directional, not a strict benchmark.
+# - Expectations are domain-level (more stable than exact URLs).
+{"id":"python-venv","query":"python venv module documentation","expected_domains":["docs.python.org"]}
+{"id":"go-mod-init","query":"go mod init documentation","expected_domains":["go.dev"]}
+{"id":"mdn-fetch","query":"fetch api mdn","expected_domains":["developer.mozilla.org"]}
+{"id":"k8s-cronjob","query":"kubernetes cronjob api reference","expected_domains":["kubernetes.io"]}
+{"id":"postgres-jsonb","query":"postgres jsonb operators documentation","expected_domains":["postgresql.org"]}
+{"id":"docker-compose","query":"docker compose file reference","expected_domains":["docs.docker.com"]}
+{"id":"rust-ownership","query":"rust ownership book","expected_domains":["doc.rust-lang.org"]}
+{"id":"numpy-zeros","query":"numpy zeros documentation","expected_domains":["numpy.org"]}
+{"id":"pydantic-config","query":"pydantic BaseModel config documentation","expected_domains":["docs.pydantic.dev"]}
+{"id":"openai-codex-cli","query":"openai codex cli documentation","expected_domains":["developers.openai.com"]}

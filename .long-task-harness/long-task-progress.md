@@ -33,11 +33,12 @@
 - Repo overview: `README.md`
 - Session continuity config: `.long-task-harness/*`, `AGENTS.md`, `.claude/settings.json`
 - Python reference implementation scaffold: `pyproject.toml`, `src/wstk/*`, `uv.lock`
-- Working CLI: `wstk providers|search|fetch|extract`
+- Working CLI: `wstk providers|search|fetch|extract|eval`
+- Sample eval suite: `suites/search-basic.jsonl`
 
 ### What's Not Working
 - No browser rendering path yet (`render`, `--method browser`)
-- No `pipeline` and `eval` commands yet
+- No `pipeline` command yet
 - Extraction quality needs tuning for docs-heavy pages (formatting / code blocks)
 
 ### Blocked On
@@ -199,6 +200,30 @@ Make the agent-facing contract testable and verify real-world search behaviour
 #### Next Steps
 1. Decide policy semantics for `render` (especially `strict` vs `standard`) and implement `render-001`
 2. Add a minimal `pipeline` command contract (even if it’s just `search` + `extract` for top-1)
+
+### Session 6 | 2026-01-06 | Commits: (uncommitted)
+
+#### Metadata
+- **Features**: eval-001 (progressed), docs-001 (progressed), cli-001 (progressed)
+- **Files Changed**:
+  - `src/wstk/cli.py` - add `eval` command + typed summaries
+  - `src/wstk/eval/*` - suite parsing + scoring utilities
+  - `suites/search-basic.jsonl` - sample dev-docs suite
+  - `tests/test_cli_eval_contract.py`, `tests/test_eval_*` - eval contract + unit tests
+  - `docs/spec.md`, `docs/test-plan.md`, `README.md` - document eval behavior
+  - `.long-task-harness/*` - record eval feature progress
+- **Commit Summary**: (pending) `feat: add wstk eval harness`
+
+#### Goal
+Add a small, cache-backed eval harness to compare search providers and track basic quality over time
+
+#### Accomplished
+- [x] Implemented `wstk eval --suite ...` with a suite parser (JSON/JSONL), hit@k + MRR scoring, and URL overlap
+- [x] Added a sample suite and unit/contract tests for determinism and envelope stability
+
+#### Next Steps
+1. Extend eval to cover fetch/extract metrics (blocked rate, extraction heuristics)
+2. Implement `pipeline` and `render` escalation paths
 
 ---
 

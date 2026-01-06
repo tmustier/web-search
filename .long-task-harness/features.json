@@ -263,7 +263,33 @@
       ],
       "passes": false,
       "notes": "",
-      "history": {"sessions": [], "files": [], "decisions": []}
+      "history": {
+        "sessions": [
+          {
+            "session": 6,
+            "date": "2026-01-06",
+            "action": "progressed",
+            "summary": "Implemented `wstk eval` (search-only), suite parsing (JSON/JSONL), scoring (hit@k/MRR/overlap), and contract/unit tests with a sample suite"
+          }
+        ],
+        "files": [
+          "README.md",
+          "docs/spec.md",
+          "docs/test-plan.md",
+          "src/wstk/cli.py",
+          "src/wstk/eval/*",
+          "suites/search-basic.jsonl",
+          "tests/test_cli_eval_contract.py",
+          "tests/test_eval_scoring.py",
+          "tests/test_eval_suite.py"
+        ],
+        "decisions": [
+          {
+            "session": 6,
+            "decision": "Eval defaults to `--fail-on error` and uses domain-level expectations by default (URL expectations are optional and stricter)"
+          }
+        ]
+      }
     },
     {
       "id": "render-001",

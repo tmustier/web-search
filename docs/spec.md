@@ -317,6 +317,33 @@ Behavior:
 
 Run a benchmark suite (queries + expected URLs/answers) and output a report.
 
+Implementation status (v0.1.0):
+- Implemented: search-only eval (`hit@k`, MRR, URL overlap), with cache-backed determinism controls.
+- Not yet: fetch/extract metrics (blocked rates, extraction quality heuristics).
+
+Suite format:
+- `.jsonl` (recommended): one JSON object per line (blank lines + `#` comments allowed).
+- `.json`: either a JSON array of cases or `{ "cases": [...] }`.
+
+Case schema (v0.1.0):
+- `id` (string, optional; defaults to `case-<n>`)
+- `query` (string, required)
+- `expected_domains` (list of strings, optional)
+- `expected_urls` (list of strings, optional)
+- `k` (int, optional; overrides global `--k` for this case)
+
+Evaluation criterion (v0.1.0):
+- If `expected_urls` is set: case passes when any expected URL appears in top-`k` (normalized, query/fragment stripped).
+- Else if `expected_domains` is set: case passes when any expected domain appears in top-`k` (subdomains allowed).
+- Else: case is unscored.
+
+Key flags (v0.1.0):
+- `--suite <path>`
+- `--provider <id>` (repeatable; default: `auto`)
+- `-k, --k <N>` (default: 10)
+- `--fail-on <none|error|miss|miss_or_error>` (default: `error`)
+- `--include-results` (include result items in JSON output)
+
 Metrics (v0):
 - search: hit@k, URL overlap, “expected domain present”
 - fetch: success rate, blocked rate, median latency

@@ -86,7 +86,7 @@ These are the “agent skill” scenarios.
 ### F3) Blocked page
 - ensure fail-fast in standard policy with exit `4` and diagnostics
 
-## G) Quality evaluation (future `eval-001`)
+## G) Quality evaluation (`eval-001`)
 
 Define suites with:
 - query
@@ -99,3 +99,5 @@ Produce a report tracking:
 - blocked/needs_render rates
 - extraction non-empty and simple boilerplate heuristics
 
+Current coverage (v0.1.0):
+- `wstk eval --suite ...` implements search-only metrics (hit@k, MRR, overlap) with a sample suite in `suites/search-basic.jsonl`.

@@ -7,9 +7,10 @@ This repo is a spec and reference implementation plan for a portable “search +
 
 ## Status
 
-Early implementation in progress (targeting `0.1.0`).
+`0.1.0` implements a baseline CLI: `providers`, `search`, `fetch`, `extract`, and `eval` (search-only metrics).
 
 ## Quickstart (dev)
 
-- Install deps: `cd web-search && uv sync`
+- Install deps: `uv sync`
 - Run: `uv run wstk --help`
+- Run eval: `uv run wstk eval --suite suites/search-basic.jsonl --provider ddgs`
