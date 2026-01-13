@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Acme Blog: Incident Postmortem</title>
+    <style>
+      body { font-family: system-ui, sans-serif; }
+      .layout { display: grid; grid-template-columns: 280px 1fr; gap: 24px; }
+      .directory { background: #f6f6f6; padding: 12px; }
+      .article { max-width: 720px; }
+      .sponsor { background: #fff3cd; padding: 12px; margin: 16px 0; }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <div class="directory">
+        <h2>All docs topics</h2>
+        <ul>
+          <li>Account settings</li>
+          <li>API keys</li>
+          <li>Alerts</li>
+          <li>Analytics</li>
+          <li>Archiving</li>
+          <li>Audit logs</li>
+          <li>Automation</li>
+          <li>Backups</li>
+          <li>Batch jobs</li>
+          <li>Billing</li>
+          <li>Budgets</li>
+          <li>Change management</li>
+          <li>CLI reference</li>
+          <li>Compliance</li>
+          <li>Connectors</li>
+          <li>Data export</li>
+          <li>Data import</li>
+          <li>Deployment</li>
+          <li>Encryption</li>
+          <li>Error handling</li>
+          <li>Events</li>
+          <li>Feature flags</li>
+          <li>Files</li>
+          <li>Governance</li>
+          <li>Identity</li>
+          <li>Incident response</li>
+          <li>Integrations</li>
+          <li>Latency</li>
+          <li>Logs</li>
+          <li>Maintenance</li>
+          <li>Metrics</li>
+          <li>Migration</li>
+          <li>Monitoring</li>
+          <li>Notifications</li>
+          <li>On-call</li>
+          <li>Permissions</li>
+          <li>Personalization</li>
+          <li>Regions</li>
+          <li>Retention</li>
+          <li>Roles</li>
+          <li>Routing</li>
+          <li>Runbooks</li>
+          <li>Sandboxing</li>
+          <li>Scheduling</li>
+          <li>Secrets</li>
+          <li>Service health</li>
+          <li>SLAs</li>
+          <li>Storage</li>
+          <li>Support</li>
+          <li>Task queues</li>
+          <li>Telemetry</li>
+          <li>Tenancy</li>
+          <li>Threat models</li>
+          <li>Tracing</li>
+          <li>User management</li>
+          <li>Webhooks</li>
+        </ul>
+      </div>
+
+      <div class="article">
+        <h1>Incident Postmortem: Queue Lag on 2026-01-05</h1>
+        <p>
+          On Jan 5, a misconfigured retry policy caused queue lag spikes for
+          about 32 minutes. We paused worker pools, drained the backlog, and
+          reprocessed delayed jobs.
+        </p>
+
+        <div class="sponsor">
+          <strong>Sponsored:</strong> Download the on-call checklist template.
+        </div>
+
+        <h2>What happened</h2>
+        <p>
+          A newly deployed workflow increased retries from 3 to 15. The queue
+          service auto-scaled, but throttling caused delays in downstream systems.
+        </p>
+
+        <h2>Fix</h2>
+        <p>
+          We reverted the change, capped retries, and added alerting for retry
+          spikes. We also added a dashboard for queue latency percentiles.
+        </p>
+
+        <h2>Takeaways</h2>
+        <ul>
+          <li>Retry policies should be reviewed with SRE.</li>
+          <li>Alert on queue depth early.</li>
+          <li>Document escalation paths for paging.</li>
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>

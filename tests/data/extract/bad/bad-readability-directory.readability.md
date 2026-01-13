@@ -1,0 +1,21 @@
+# Incident Postmortem: Queue Lag on 2026-01-05
+
+On Jan 5, a misconfigured retry policy caused queue lag spikes for
+about 32 minutes. We paused worker pools, drained the backlog, and
+reprocessed delayed jobs.
+
+## What happened
+
+A newly deployed workflow increased retries from 3 to 15. The queue
+service auto-scaled, but throttling caused delays in downstream systems.
+
+## Fix
+
+We reverted the change, capped retries, and added alerting for retry
+spikes. We also added a dashboard for queue latency percentiles.
+
+## Takeaways
+
+* Retry policies should be reviewed with SRE.
+* Alert on queue depth early.
+* Document escalation paths for paging.

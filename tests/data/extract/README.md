@@ -9,6 +9,7 @@ This folder holds deterministic extraction snapshots for manual comparison when 
 - `docs-sample.docs.txt` — `--strategy docs --text` output.
 - `docs-sample.readability.md` — `--strategy readability --markdown` output.
 - `docs-sample.readability.txt` — `--strategy readability --text` output.
+- `bad/` — intentionally noisy fixtures + snapshots for before/after comparisons.
 
 ## Regenerating snapshots
 

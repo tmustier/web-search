@@ -1149,6 +1149,32 @@ Document snapshot comparison guidance without mutating ground truth.
 #### Next Steps
 1. Add an optional summary/diff helper for snapshots.
 
+### Session 36 | 2026-01-13 | Commits: none
+
+#### Metadata
+- **Features**: extract-baselines (progressed)
+- **Files Changed**:
+  - `tests/data/extract/README.md` (+lines/-lines) - reference bad fixture set
+  - `tests/data/extract/bad/*` (+lines/-lines) - noisy fixtures + snapshot outputs
+- **Commit Summary**: none
+
+#### Goal
+Capture bad extraction fixtures with before snapshots.
+
+#### Accomplished
+- [x] Added noisy HTML fixtures (nav-heavy, table-heavy, embedded nav).
+- [x] Captured docs/readability markdown/text snapshots.
+- [x] Documented fixtures and regeneration commands.
+
+#### Decisions
+- None.
+
+#### Context & Learnings
+- Baseline outputs include nav/TOC noise for comparison after tuning.
+
+#### Next Steps
+1. Tune extraction and compare against bad fixture outputs.
+
 <!--
 =============================================================================
 SESSION TEMPLATE - Copy below this line for new sessions

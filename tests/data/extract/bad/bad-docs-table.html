@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Acme Cloud Docs: Billing Endpoints</title>
+    <style>
+      body { font-family: system-ui, sans-serif; }
+      main { max-width: 900px; margin: 0 auto; }
+      .toc, .notice { background: #f6f6f6; padding: 12px; margin: 12px 0; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+      code { background: #f0f0f0; padding: 2px 4px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="notice">
+        <strong>Heads up:</strong> Billing endpoints are rate limited by account tier.
+      </div>
+
+      <div class="toc">
+        <strong>On this page</strong>
+        <ul>
+          <li><a href="#endpoints">Endpoints</a></li>
+          <li><a href="#schemas">Schemas</a></li>
+          <li><a href="#errors">Errors</a></li>
+        </ul>
+      </div>
+
+      <h1 id="endpoints">Billing API Endpoints</h1>
+      <p>
+        Use these endpoints to read invoices and update payment methods. The table
+        below is intentionally dense and includes repeated headers.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Endpoint</th>
+            <th>Auth</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>GET</td>
+            <td><code>/v1/billing/invoices</code></td>
+            <td>read:billing</td>
+            <td>List invoices (paginated).</td>
+          </tr>
+          <tr>
+            <td>GET</td>
+            <td><code>/v1/billing/invoices/{id}</code></td>
+            <td>read:billing</td>
+            <td>Retrieve a single invoice by ID.</td>
+          </tr>
+          <tr>
+            <td>POST</td>
+            <td><code>/v1/billing/payment-methods</code></td>
+            <td>write:billing</td>
+            <td>Add a new payment method.</td>
+          </tr>
+          <tr>
+            <td>DELETE</td>
+            <td><code>/v1/billing/payment-methods/{id}</code></td>
+            <td>write:billing</td>
+            <td>Remove a payment method.</td>
+          </tr>
+          <tr>
+            <td>GET</td>
+            <td><code>/v1/billing/credits</code></td>
+            <td>read:billing</td>
+            <td>List promotional credits and expirations.</td>
+          </tr>
+          <tr>
+            <td>POST</td>
+            <td><code>/v1/billing/credits/apply</code></td>
+            <td>write:billing</td>
+            <td>Apply a credit to the current invoice.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="schemas">Schemas</h2>
+      <p>
+        The <code>payment_method</code> object includes nested billing details and
+        regional tax metadata.
+      </p>
+
+      <h2 id="errors">Errors</h2>
+      <ul>
+        <li><code>402</code> payment required</li>
+        <li><code>409</code> billing profile locked</li>
+      </ul>
+    </main>
+  </body>
+</html>

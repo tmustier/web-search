@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Acme Platform: Migration Guide</title>
+    <style>
+      body { font-family: system-ui, sans-serif; }
+      .release-nav { background: #f6f6f6; padding: 12px; }
+      code { background: #f0f0f0; padding: 2px 4px; }
+      pre { background: #f0f0f0; padding: 12px; }
+    </style>
+  </head>
+  <body>
+    <article>
+      <div class="release-nav">
+        <strong>Release archives</strong>
+        <ul>
+          <li>Release 2026.01</li>
+          <li>Release 2025.12</li>
+          <li>Release 2025.11</li>
+          <li>Release 2025.10</li>
+          <li>Release 2025.09</li>
+          <li>Release 2025.08</li>
+          <li>Release 2025.07</li>
+          <li>Release 2025.06</li>
+          <li>Release 2025.05</li>
+          <li>Release 2025.04</li>
+          <li>Release 2025.03</li>
+          <li>Release 2025.02</li>
+          <li>Release 2025.01</li>
+          <li>Release 2024.12</li>
+        </ul>
+      </div>
+
+      <h1>Migration Guide: Jobs v2</h1>
+      <p>
+        Jobs v2 introduces a new retry model. Follow the steps below to migrate
+        without downtime.
+      </p>
+
+      <h2>Step 1: Update the client</h2>
+      <pre><code>pip install acme-jobs==2.0.0</code></pre>
+
+      <h2>Step 2: Update the config</h2>
+      <pre><code>{
+  "jobs": {
+    "retries": 5,
+    "backoff": "exponential"
+  }
+}</code></pre>
+
+      <h2>Step 3: Verify</h2>
+      <p>Run a dry-run and check the dashboard for failures.</p>
+    </article>
+  </body>
+</html>

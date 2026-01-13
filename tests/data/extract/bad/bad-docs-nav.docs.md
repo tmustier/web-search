@@ -1,0 +1,57 @@
+Home / APIs / Storage
+
+## Navigation
+
+* [Overview](#overview)
+* [Authentication](#auth)
+* [Upload](#upload)
+* [Download](#download)
+* [Errors](#errors)
+* [Changelog](#changelog)
+
+**On this page**
+
+* [Overview](#overview)
+* [Authentication](#auth)
+* [Upload](#upload)
+* [Download](#download)
+* [Errors](#errors)
+
+# Storage API
+
+The Storage API lets you upload, list, and download objects. This page
+focuses on the high-traffic endpoints that most teams use.
+
+**Beta note:** The `multipart` endpoint is still in preview.
+
+## Authentication
+
+Send a bearer token with every request:
+
+```
+curl -H "Authorization: Bearer $ACME_TOKEN" \
+  https://api.acme.dev/v1/storage/buckets
+```
+
+## Upload
+
+Uploads are multi-part by default:
+
+```
+curl -X POST https://api.acme.dev/v1/storage/upload \
+  -H "Authorization: Bearer $ACME_TOKEN" \
+  -F "file=@report.csv"
+```
+
+## Download
+
+Signed URLs expire after 10 minutes.
+
+## Errors
+
+* `401` invalid token
+* `403` missing scope
+* `429` rate limited
+
+[Previous: Quotas](/docs/storage/quotas)
+[Next: Webhooks](/docs/storage/webhooks)

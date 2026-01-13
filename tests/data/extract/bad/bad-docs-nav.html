@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Acme Cloud Docs: Storage API</title>
+    <style>
+      body { font-family: system-ui, sans-serif; }
+      .layout { display: grid; grid-template-columns: 240px 1fr; gap: 20px; }
+      .sidebar, .toc, .footer-nav { background: #f6f6f6; padding: 12px; }
+      .callout { border-left: 4px solid #ffb703; background: #fff3cd; padding: 10px; }
+      code { background: #f0f0f0; padding: 2px 4px; }
+      pre { background: #f0f0f0; padding: 12px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>Acme Cloud</strong>
+      <nav>
+        <a href="/docs">Docs</a>
+        <a href="/api">API</a>
+        <a href="/support">Support</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="breadcrumbs">Home / APIs / Storage</div>
+      <div class="layout">
+        <div class="sidebar">
+          <h2>Navigation</h2>
+          <ul>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#auth">Authentication</a></li>
+            <li><a href="#upload">Upload</a></li>
+            <li><a href="#download">Download</a></li>
+            <li><a href="#errors">Errors</a></li>
+            <li><a href="#changelog">Changelog</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="toc">
+            <strong>On this page</strong>
+            <ul>
+              <li><a href="#overview">Overview</a></li>
+              <li><a href="#auth">Authentication</a></li>
+              <li><a href="#upload">Upload</a></li>
+              <li><a href="#download">Download</a></li>
+              <li><a href="#errors">Errors</a></li>
+            </ul>
+          </div>
+
+          <h1 id="overview">Storage API</h1>
+          <p>
+            The Storage API lets you upload, list, and download objects. This page
+            focuses on the high-traffic endpoints that most teams use.
+          </p>
+
+          <div class="callout">
+            <strong>Beta note:</strong> The <code>multipart</code> endpoint is still in preview.
+          </div>
+
+          <h2 id="auth">Authentication</h2>
+          <p>Send a bearer token with every request:</p>
+          <pre><code>curl -H "Authorization: Bearer $ACME_TOKEN" \
+  https://api.acme.dev/v1/storage/buckets</code></pre>
+
+          <h2 id="upload">Upload</h2>
+          <p>Uploads are multi-part by default:</p>
+          <pre><code>curl -X POST https://api.acme.dev/v1/storage/upload \
+  -H "Authorization: Bearer $ACME_TOKEN" \
+  -F "file=@report.csv"</code></pre>
+
+          <h2 id="download">Download</h2>
+          <p>Signed URLs expire after 10 minutes.</p>
+
+          <h2 id="errors">Errors</h2>
+          <ul>
+            <li><code>401</code> invalid token</li>
+            <li><code>403</code> missing scope</li>
+            <li><code>429</code> rate limited</li>
+          </ul>
+
+          <div class="footer-nav">
+            <a href="/docs/storage/quotas">Previous: Quotas</a>
+            <a href="/docs/storage/webhooks">Next: Webhooks</a>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>© 2026 Acme Cloud. Terms · Privacy · Status</p>
+    </footer>
+  </body>
+</html>

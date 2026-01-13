@@ -1,0 +1,42 @@
+**Release archives**
+
+* Release 2026.01
+* Release 2025.12
+* Release 2025.11
+* Release 2025.10
+* Release 2025.09
+* Release 2025.08
+* Release 2025.07
+* Release 2025.06
+* Release 2025.05
+* Release 2025.04
+* Release 2025.03
+* Release 2025.02
+* Release 2025.01
+* Release 2024.12
+
+# Migration Guide: Jobs v2
+
+Jobs v2 introduces a new retry model. Follow the steps below to migrate
+without downtime.
+
+## Step 1: Update the client
+
+```
+pip install acme-jobs==2.0.0
+```
+
+## Step 2: Update the config
+
+```
+{
+  "jobs": {
+    "retries": 5,
+    "backoff": "exponential"
+  }
+}
+```
+
+## Step 3: Verify
+
+Run a dry-run and check the dashboard for failures.
