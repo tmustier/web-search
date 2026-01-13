@@ -9,14 +9,13 @@ from wstk.cli_support import (
     cache_from_args,
     domain_rules_from_args,
     envelope_and_exit,
-    parse_headers,
     wants_json,
     wants_plain,
 )
+from wstk.commands.support import fetch_settings_from_args
 from wstk.errors import ExitCode, WstkError
 from wstk.eval.runner import run_search_eval
 from wstk.eval.suite import load_suite
-from wstk.fetch.http import FetchSettings
 from wstk.output import EnvelopeMeta
 from wstk.search.base import SearchProvider
 
@@ -88,11 +87,8 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
             "strict policy requires --allow-domain for eval fetch/extract; skipping fetch/extract metrics"
         )
 
-    headers = parse_headers(args)
-    fetch_settings = FetchSettings(
-        timeout=float(args.timeout),
-        proxy=args.proxy,
-        headers=headers,
+    fetch_settings = fetch_settings_from_args(
+        args,
         max_bytes=5 * 1024 * 1024,
         follow_redirects=True,
         detect_blocks=True,

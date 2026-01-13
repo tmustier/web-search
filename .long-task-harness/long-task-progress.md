@@ -671,6 +671,47 @@ Document post-ralph status and spec alignment
 
 ---
 
+### Session 21 | 2026-01-13 | Commits: none
+
+#### Metadata
+- **Features**: cli-001 (progressed), extract-001 (progressed), pipeline-001 (progressed)
+- **Files Changed**:
+  - `src/wstk/extract/utils.py` - centralize extraction helpers + truncation
+  - `src/wstk/commands/support.py` - shared fetch/render settings builders
+  - `src/wstk/commands/extract_cmd.py` - use shared helpers + doc assembly
+  - `src/wstk/commands/pipeline_cmd.py` - use shared helpers + dedup warnings
+  - `src/wstk/commands/fetch_cmd.py` - shared fetch settings
+  - `src/wstk/commands/render_cmd.py` - shared render settings
+  - `src/wstk/commands/eval_cmd.py` - shared fetch settings
+  - `src/wstk/eval/runner.py` - shared extraction strategy
+  - `src/wstk/models.py` - add `with_extracted`
+  - `src/wstk/cli_support.py` - add `append_warning`
+- **Commit Summary**: none (not committed)
+
+#### Goal
+Refactor shared extraction + settings logic
+
+#### Accomplished
+- [x] Centralized extraction strategy, truncation, and output selection helpers
+- [x] Centralized fetch/render settings creation across commands
+- [x] Manual CLI checks for search/fetch/extract/pipeline using real docs URL
+
+#### Decisions
+- None.
+
+#### Surprises
+- None.
+
+#### Context & Learnings
+- Tests: `uv run --extra dev pytest` (passed).
+- Manual checks: `wstk providers`, `wstk search`, `wstk pipeline --plan`, `wstk fetch`, `wstk extract` against `docs.python.org` (passed).
+
+#### Next Steps
+1. Continue spec-alignment cleanup (e.g., `--site`, `--accept`, robots enforcement).
+2. Consider docs extraction cleanup for large TOCs/nav content.
+
+---
+
 <!--
 =============================================================================
 SESSION TEMPLATE - Copy below this line for new sessions

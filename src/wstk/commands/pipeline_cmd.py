@@ -7,21 +7,25 @@ from dataclasses import dataclass
 
 import wstk.search.registry as search_registry
 from wstk.cli_support import (
-    cache_from_args,
+    append_warning,
     domain_rules_from_args,
     enforce_url_policy,
     envelope_and_exit,
-    parse_headers,
     wants_json,
     wants_plain,
 )
+from wstk.commands.support import fetch_settings_from_args, render_settings_from_args
 from wstk.errors import ExitCode, WstkError
-from wstk.extract.docs_extractor import extract_docs, looks_like_docs
-from wstk.extract.readability_extractor import extract_readability
+from wstk.extract.utils import (
+    choose_strategy,
+    extract_html,
+    select_extracted_output,
+    text_for_scan,
+)
 from wstk.fetch.http import FetchSettings, fetch_url
-from wstk.models import DocContent, DocSection, Document, ExtractedContent
+from wstk.models import Document
 from wstk.output import EnvelopeMeta
-from wstk.render.browser import RenderSettings, render_url, resolve_evidence_dir
+from wstk.render.browser import render_url
 from wstk.safety import detect_prompt_injection, redact_text
 from wstk.search.types import SearchQuery, SearchResultItem
 from wstk.urlutil import get_host, host_matches_domain, is_allowed, redact_url
@@ -99,7 +103,7 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
             exit_code=ExitCode.INVALID_USAGE,
         )
     if args.budget:
-        _append_warning(warnings, "--budget is not enforced in v0.1.0")
+        append_warning(warnings, "--budget is not enforced in v0.1.0")
 
     provider, provider_meta = search_registry.select_search_provider(
         args.provider, timeout=float(args.timeout), proxy=args.proxy
@@ -141,24 +145,14 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
 
     fetch_settings = None
     if method in {"http", "auto"}:
-        headers = parse_headers(args)
-        cache = cache_from_args(args)
-        fetch_settings = FetchSettings(
-            timeout=float(args.timeout),
-            proxy=args.proxy,
-            headers=headers,
+        fetch_settings = fetch_settings_from_args(
+            args,
             max_bytes=5 * 1024 * 1024,
             follow_redirects=True,
             detect_blocks=True,
-            cache=cache,
         )
 
     evidence_dir = None
-    if method == "browser":
-        evidence_dir = resolve_evidence_dir(
-            evidence_dir=args.evidence_dir,
-            cache_dir=args.cache_dir,
-        )
 
     documents: list[Document] = []
     provider_chain = [provider_id]
@@ -279,19 +273,13 @@ def _extract_candidate(
             base_doc = res.document
 
     if method == "browser":
-        if evidence_dir is None:
-            evidence_dir = resolve_evidence_dir(
-                evidence_dir=args.evidence_dir,
-                cache_dir=args.cache_dir,
-            )
-        render_settings = RenderSettings(
-            timeout=float(args.timeout),
-            proxy=args.proxy,
+        render_settings = render_settings_from_args(
+            args,
+            evidence_dir=evidence_dir,
             wait_ms=0,
             wait_for=None,
             headful=False,
             screenshot=False,
-            evidence_dir=evidence_dir,
             profile_dir=None,
             profile_label=None,
         )
@@ -306,30 +294,22 @@ def _extract_candidate(
             exit_code=ExitCode.RUNTIME_ERROR,
         )
 
-    strategy = "docs" if looks_like_docs(html) else "readability"
-    if strategy == "docs":
-        extracted = extract_docs(html, include_markdown=True, include_text=True)
-    else:
-        extracted = extract_readability(html, include_markdown=True, include_text=True)
+    strategy = choose_strategy(html)
+    extracted = extract_html(
+        html,
+        strategy=strategy,
+        include_markdown=True,
+        include_text=True,
+    )
 
-    extracted = _apply_limits(extracted, max_chars=0, max_tokens=0)
-
-    injection_hits = detect_prompt_injection(_text_for_scan(extracted))
+    injection_hits = detect_prompt_injection(text_for_scan(extracted))
     if injection_hits:
-        _append_warning(
+        append_warning(
             warnings,
             "possible prompt injection patterns detected: " + ", ".join(injection_hits),
         )
 
-    doc = Document(
-        url=base_doc.url,
-        fetched_at=base_doc.fetched_at,
-        fetch_method=base_doc.fetch_method,
-        http=base_doc.http,
-        artifact=base_doc.artifact,
-        render=base_doc.render,
-        extracted=extracted,
-    )
+    doc = base_doc.with_extracted(extracted)
 
     if base_doc.fetch_method == "http":
         providers.append("http")
@@ -391,7 +371,7 @@ def _emit_plain_documents(args: argparse.Namespace, documents: list[Document]) -
         extracted = doc.extracted
         if extracted is None:
             continue
-        content = extracted.markdown or extracted.text or ""
+        content = select_extracted_output(extracted, prefer_markdown=True)
         if args.redact and content:
             content = redact_text(content)
         if content:
@@ -419,7 +399,7 @@ def _emit_human_documents(args: argparse.Namespace, documents: list[Document]) -
         extracted = doc.extracted
         content = ""
         if extracted is not None:
-            content = extracted.markdown or extracted.text or ""
+            content = select_extracted_output(extracted, prefer_markdown=True)
         if args.redact and content:
             content = redact_text(content)
         if content:
@@ -455,119 +435,7 @@ def _handle_no_results(
     )
 
 
-def _apply_limits(
-    extracted: ExtractedContent, *, max_chars: int, max_tokens: int
-) -> ExtractedContent:
-    if max_chars <= 0 and max_tokens <= 0:
-        return extracted
-
-    markdown = _truncate_value(extracted.markdown, max_chars, max_tokens)
-    text = _truncate_value(extracted.text, max_chars, max_tokens)
-    doc = extracted.doc
-    if doc is not None:
-        sections = _truncate_sections(doc.sections, max_chars, max_tokens)
-        doc = DocContent(title=doc.title, sections=sections, links=doc.links)
-
-    return ExtractedContent(
-        title=extracted.title,
-        language=extracted.language,
-        extraction_method=extracted.extraction_method,
-        markdown=markdown,
-        text=text,
-        doc=doc,
-    )
-
-
-def _truncate_value(value: str | None, max_chars: int, max_tokens: int) -> str | None:
-    if value is None:
-        return None
-    truncated = value
-    if max_tokens > 0:
-        tokens = truncated.split()
-        if len(tokens) > max_tokens:
-            truncated = " ".join(tokens[:max_tokens])
-    if max_chars > 0 and len(truncated) > max_chars:
-        truncated = truncated[:max_chars]
-    return truncated or None
-
-
-def _truncate_sections(
-    sections: list[DocSection], max_chars: int, max_tokens: int
-) -> list[DocSection]:
-    if max_chars <= 0 and max_tokens <= 0:
-        return sections
-
-    remaining_chars = max_chars if max_chars > 0 else None
-    remaining_tokens = max_tokens if max_tokens > 0 else None
-    truncated_sections: list[DocSection] = []
-
-    for section in sections:
-        content, remaining_chars, remaining_tokens = _truncate_with_budget(
-            section.content,
-            remaining_chars,
-            remaining_tokens,
-        )
-        truncated_sections.append(
-            DocSection(
-                heading=section.heading,
-                level=section.level,
-                content=content,
-            )
-        )
-        if remaining_chars is not None and remaining_chars <= 0:
-            break
-        if remaining_tokens is not None and remaining_tokens <= 0:
-            break
-
-    return truncated_sections
-
-
-def _truncate_with_budget(
-    value: str | None,
-    remaining_chars: int | None,
-    remaining_tokens: int | None,
-) -> tuple[str | None, int | None, int | None]:
-    if value is None:
-        return None, remaining_chars, remaining_tokens
-
-    truncated = value
-    if remaining_chars is not None and len(truncated) > remaining_chars:
-        truncated = truncated[:remaining_chars]
-
-    if remaining_tokens is not None:
-        tokens = truncated.split()
-        if len(tokens) > remaining_tokens:
-            truncated = " ".join(tokens[:remaining_tokens])
-            tokens_used = remaining_tokens
-        else:
-            tokens_used = len(tokens)
-        remaining_tokens -= tokens_used
-
-    if remaining_chars is not None:
-        remaining_chars -= len(truncated)
-
-    truncated = truncated.strip() or None
-    return truncated, remaining_chars, remaining_tokens
-
-
-def _text_for_scan(extracted: ExtractedContent) -> str:
-    if extracted.markdown:
-        return extracted.markdown
-    if extracted.text:
-        return extracted.text
-    doc = extracted.doc
-    if doc is None:
-        return ""
-    sections = [section.content for section in doc.sections if section.content]
-    return "\n".join(sections)
-
-
 def _extend_unique(values: list[str], extra: list[str]) -> None:
     for value in extra:
         if value not in values:
             values.append(value)
-
-
-def _append_warning(warnings: list[str], message: str) -> None:
-    if message not in warnings:
-        warnings.append(message)

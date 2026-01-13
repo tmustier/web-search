@@ -126,6 +126,17 @@ class Document:
     def new(url: str, fetch_method: str) -> Document:
         return Document(url=url, fetched_at=_rfc3339_now(), fetch_method=fetch_method)
 
+    def with_extracted(self, extracted: ExtractedContent) -> Document:
+        return Document(
+            url=self.url,
+            fetched_at=self.fetched_at,
+            fetch_method=self.fetch_method,
+            http=self.http,
+            artifact=self.artifact,
+            render=self.render,
+            extracted=extracted,
+        )
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "url": self.url,

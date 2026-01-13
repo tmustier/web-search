@@ -5,14 +5,10 @@ import time
 from pathlib import Path
 
 from wstk.cli_support import enforce_url_policy, envelope_and_exit, wants_json, wants_plain
+from wstk.commands.support import render_settings_from_args
 from wstk.errors import ExitCode, WstkError
 from wstk.output import EnvelopeMeta
-from wstk.render.browser import (
-    RenderSettings,
-    render_url,
-    resolve_evidence_dir,
-    resolve_system_profile,
-)
+from wstk.render.browser import render_url, resolve_system_profile
 from wstk.urlutil import redact_url
 
 
@@ -92,18 +88,12 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
     if args.headful:
         warnings.append("render used headful mode")
 
-    evidence_dir = resolve_evidence_dir(
-        evidence_dir=args.evidence_dir,
-        cache_dir=args.cache_dir,
-    )
-    settings = RenderSettings(
-        timeout=float(args.timeout),
-        proxy=args.proxy,
+    settings = render_settings_from_args(
+        args,
         wait_ms=int(args.wait),
         wait_for=args.wait_for,
         headful=bool(args.headful),
         screenshot=bool(args.screenshot),
-        evidence_dir=evidence_dir,
         profile_dir=profile_dir,
         profile_label=profile_label,
     )

@@ -12,8 +12,7 @@ from wstk.cache import Cache, make_cache_key
 from wstk.errors import WstkError
 from wstk.eval.scoring import normalize_url_for_match, score_search_results
 from wstk.eval.suite import EvalSuite
-from wstk.extract.docs_extractor import extract_docs, looks_like_docs
-from wstk.extract.readability_extractor import extract_readability
+from wstk.extract.utils import choose_strategy, extract_html
 from wstk.fetch.http import FetchSettings, fetch_url
 from wstk.search.base import SearchProvider
 from wstk.search.types import SearchQuery, SearchResultItem
@@ -281,11 +280,13 @@ def _score_extraction(
             strategy = "text"
             extraction_method = "plain_text"
         else:
-            strategy = "docs" if looks_like_docs(html) else "readability"
-            if strategy == "docs":
-                extracted = extract_docs(html, include_markdown=True, include_text=True)
-            else:
-                extracted = extract_readability(html, include_markdown=True, include_text=True)
+            strategy = choose_strategy(html)
+            extracted = extract_html(
+                html,
+                strategy=strategy,
+                include_markdown=True,
+                include_text=True,
+            )
             markdown = extracted.markdown
             text = extracted.text
             extraction_method = extracted.extraction_method

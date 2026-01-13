@@ -22,6 +22,11 @@ def wants_plain(args: argparse.Namespace) -> bool:
     return bool(getattr(args, "plain", False) and not wants_json(args))
 
 
+def append_warning(warnings: list[str], message: str) -> None:
+    if message not in warnings:
+        warnings.append(message)
+
+
 def add_global_flags(parser: argparse.ArgumentParser, *, suppress_defaults: bool) -> None:
     def default(value):
         return argparse.SUPPRESS if suppress_defaults else value

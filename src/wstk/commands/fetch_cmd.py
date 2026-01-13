@@ -4,15 +4,14 @@ import argparse
 import time
 
 from wstk.cli_support import (
-    cache_from_args,
     enforce_url_policy,
     envelope_and_exit,
-    parse_headers,
     wants_json,
     wants_plain,
 )
+from wstk.commands.support import fetch_settings_from_args
 from wstk.errors import ExitCode
-from wstk.fetch.http import FetchSettings, fetch_url
+from wstk.fetch.http import fetch_url
 from wstk.output import CacheMeta, EnvelopeMeta
 from wstk.urlutil import redact_url
 
@@ -65,16 +64,11 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
     url = str(args.url)
     enforce_url_policy(args=args, url=url, operation="fetch")
 
-    headers = parse_headers(args)
-    cache = cache_from_args(args)
-    fetch_settings = FetchSettings(
-        timeout=float(args.timeout),
-        proxy=args.proxy,
-        headers=headers,
+    fetch_settings = fetch_settings_from_args(
+        args,
         max_bytes=int(args.max_bytes),
         follow_redirects=bool(args.follow_redirects),
         detect_blocks=bool(args.detect_blocks),
-        cache=cache,
     )
     res = fetch_url(url, settings=fetch_settings)
 
