@@ -1,0 +1,41 @@
+Widget Quickstart
+Widgets help you build reliable agents. This guide focuses on the
+          essentials so you can evaluate output quality quickly.
+Install
+Install with
+pip
+:
+pip install widget-sdk
+If you prefer
+uv
+, use
+uv pip install widget-sdk
+.
+Usage
+Import
+WidgetClient
+.
+Configure your API key.
+Call
+client.run()
+with your prompt.
+from widget import WidgetClient
+
+client = WidgetClient(api_key="demo")
+response = client.run("Summarize latest releases")
+print(response.text)
+API Reference
+The main entry point is
+WidgetClient
+.
+WidgetClient.run(prompt)
+- run a single request
+WidgetClient.stream(prompt)
+- stream tokens
+FAQ
+Q:
+Does Widget support retries?
+A:
+Yes, use
+retry_policy
+in settings.

@@ -1,0 +1,1 @@
+{"ok":false,"command":"extract","version":"0.1.0","data":{},"warnings":[],"error":{"code":"not_found","message":"URL returned 404 (not found)","details":{"url":"https://www.sqlite.org/whynot.html","final_url":"https://www.sqlite.org/whynot.html"}},"meta":{"duration_ms":863,"cache":null,"providers":[]}}

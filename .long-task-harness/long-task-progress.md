@@ -1059,6 +1059,71 @@ Verify robots policy tests and close spec-003.
 
 ---
 
+### Session 33 | 2026-01-13 | Commits: none
+
+#### Metadata
+- **Features**: extract-baselines (started)
+- **Files Changed**:
+  - `tests/data/extract/docs-sample.html` (+lines/-lines) - synthetic docs fixture
+  - `tests/data/extract/docs-sample.docs.md` (+lines/-lines) - docs strategy markdown snapshot
+  - `tests/data/extract/docs-sample.docs.txt` (+lines/-lines) - docs strategy text snapshot
+  - `tests/data/extract/docs-sample.readability.md` (+lines/-lines) - readability markdown snapshot
+  - `tests/data/extract/docs-sample.readability.txt` (+lines/-lines) - readability text snapshot
+  - `tests/data/extract/README.md` (+lines/-lines) - snapshot regeneration notes
+  - `docs/test-plan.md` (+lines/-lines) - link to fixture snapshots
+  - `.long-task-harness/long-task-progress.md` (+lines/-lines) - record session
+- **Commit Summary**: none
+
+#### Goal
+Create extraction baseline snapshots for comparison.
+
+#### Accomplished
+- [x] Added a synthetic docs fixture with nav/toc/sidebars.
+- [x] Captured docs + readability outputs (markdown + text) for baseline diffs.
+- [x] Documented regeneration commands and fixture location.
+
+#### Decisions
+- None.
+
+#### Context & Learnings
+- Baselines are local-only and deterministic (no network dependency).
+
+#### Next Steps
+1. Decide whether to add additional fixtures from real-world docs.
+
+---
+
+### Session 34 | 2026-01-13 | Commits: none
+
+#### Metadata
+- **Features**: extract-baselines (progressed)
+- **Files Changed**:
+  - `tests/data/e2e/README.md` (+lines/-lines) - snapshot inventory
+  - `tests/data/e2e/commands.sh` (+lines/-lines) - regeneration script
+  - `tests/data/e2e/*.json` (+lines/-lines) - real-world outputs
+  - `docs/test-plan.md` (+lines/-lines) - link to E2E snapshots
+  - `.long-task-harness/long-task-progress.md` (+lines/-lines) - record session
+- **Commit Summary**: none
+
+#### Goal
+Capture real-world E2E snapshots for extraction regression checks.
+
+#### Accomplished
+- [x] Captured search/pipeline/fetch/extract outputs for stable docs and articles.
+- [x] Added tough-task snapshots (JS-only, bot walls, login/auth gates, non-HTML).
+- [x] Documented commands + expected outcomes in `tests/data/e2e`.
+
+#### Decisions
+- None.
+
+#### Context & Learnings
+- Some snapshots intentionally record non-zero exits (`needs_render`, `blocked`).
+
+#### Next Steps
+1. Commit E2E snapshot dataset and proceed with extraction tuning.
+
+---
+
 <!--
 =============================================================================
 SESSION TEMPLATE - Copy below this line for new sessions

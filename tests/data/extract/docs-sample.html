@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Widget Docs: Quickstart</title>
+    <style>
+      body { font-family: system-ui, sans-serif; }
+      header, nav, aside, footer { background: #f6f6f6; padding: 12px; }
+      main { max-width: 720px; margin: 24px auto; }
+      code { background: #f0f0f0; padding: 2px 4px; }
+      pre { background: #f0f0f0; padding: 12px; }
+      .layout { display: grid; grid-template-columns: 200px 1fr 220px; gap: 16px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>Widget Docs</strong>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/guides">Guides</a>
+        <a href="/api">API</a>
+        <a href="/changelog">Changelog</a>
+      </nav>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <h2>Docs</h2>
+        <ul>
+          <li><a href="#install">Install</a></li>
+          <li><a href="#usage">Usage</a></li>
+          <li><a href="#api">API</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </aside>
+
+      <main>
+        <h1>Widget Quickstart</h1>
+        <p>
+          Widgets help you build reliable agents. This guide focuses on the
+          essentials so you can evaluate output quality quickly.
+        </p>
+
+        <section id="install">
+          <h2>Install</h2>
+          <p>Install with <code>pip</code>:</p>
+          <pre><code>pip install widget-sdk</code></pre>
+          <p>
+            If you prefer <code>uv</code>, use
+            <code>uv pip install widget-sdk</code>.
+          </p>
+        </section>
+
+        <section id="usage">
+          <h2>Usage</h2>
+          <ol>
+            <li>Import <code>WidgetClient</code>.</li>
+            <li>Configure your API key.</li>
+            <li>Call <code>client.run()</code> with your prompt.</li>
+          </ol>
+          <pre><code>from widget import WidgetClient
+
+client = WidgetClient(api_key="demo")
+response = client.run("Summarize latest releases")
+print(response.text)</code></pre>
+        </section>
+
+        <section id="api">
+          <h2>API Reference</h2>
+          <p>The main entry point is <code>WidgetClient</code>.</p>
+          <ul>
+            <li><code>WidgetClient.run(prompt)</code> - run a single request</li>
+            <li><code>WidgetClient.stream(prompt)</code> - stream tokens</li>
+          </ul>
+        </section>
+
+        <section id="faq">
+          <h2>FAQ</h2>
+          <p><strong>Q:</strong> Does Widget support retries?</p>
+          <p><strong>A:</strong> Yes, use <code>retry_policy</code> in settings.</p>
+        </section>
+      </main>
+
+      <aside class="toc">
+        <h2>On this page</h2>
+        <ul>
+          <li><a href="#install">Install</a></li>
+          <li><a href="#usage">Usage</a></li>
+          <li><a href="#api">API Reference</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </aside>
+    </div>
+
+    <footer>
+      <p>© 2026 Widget Inc. All rights reserved.</p>
+    </footer>
+  </body>
+</html>

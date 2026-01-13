@@ -72,12 +72,13 @@ Mock HTTP fetch responses and verify:
 
 Use fixture HTML files (no network):
 - article-like HTML → markdown non-empty, title extracted
-- docs-like HTML with code blocks → ensure code is preserved (future `docs` strategy)
+- docs-like HTML with code blocks → ensure code is preserved (see `tests/data/extract/docs-sample.html` snapshots)
 - truncation (`--max-chars`) behaves predictably
 
 ## F) End-to-end scenarios (manual / optional automation)
 
 These are the “agent skill” scenarios.
+- Snapshot outputs live in `tests/data/e2e`.
 
 ### F1) Basic doc lookup
 - `wstk search "<product> docs" --plain | head -n 1 | xargs wstk extract --plain`
