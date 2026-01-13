@@ -1124,6 +1124,30 @@ Capture real-world E2E snapshots for extraction regression checks.
 
 ---
 
+### Session 35 | 2026-01-13 | Commits: none
+
+#### Metadata
+- **Features**: extract-baselines (progressed)
+- **Files Changed**:
+  - `tests/data/e2e/README.md` (+lines/-lines) - comparison guidance for snapshot integrity
+- **Commit Summary**: none
+
+#### Goal
+Document snapshot comparison guidance without mutating ground truth.
+
+#### Accomplished
+- [x] Added stable vs volatile field guidance for E2E snapshot comparisons.
+- [x] Clarified that raw JSON snapshots remain canonical ground truth.
+
+#### Decisions
+- None.
+
+#### Context & Learnings
+- Comparisons should use derived summaries and report volatile-field deltas for context.
+
+#### Next Steps
+1. Add an optional summary/diff helper for snapshots.
+
 <!--
 =============================================================================
 SESSION TEMPLATE - Copy below this line for new sessions
@@ -1161,7 +1185,6 @@ GUIDELINES FOR GOOD SESSION ENTRIES
 
 1. METADATA is for machines (subagent lookup)
    - Always list features touched with status
-   - Always list files with change magnitude
    - Always include commit range or hashes
 
 2. DECISIONS are for continuity

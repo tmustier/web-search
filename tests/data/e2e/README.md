@@ -8,6 +8,23 @@ Real-world CLI outputs captured for extraction quality comparisons and regressio
 - Some snapshots intentionally capture failures (`blocked`, `needs_render`, `401`).
 - Outputs are size-bounded with `--max-results`, `--max-bytes`, and `--max-chars`.
 - Regeneration commands are in `tests/data/e2e/commands.sh` (some exit non-zero by design).
+- Treat the raw JSON snapshots as canonical ground truth; do not edit them for comparisons.
+
+## Comparison guidance
+
+Use derived summaries for comparisons without mutating snapshots.
+
+**Stable summary fields (semantic):**
+- `ok`, `command`, `error.code`, `error.details.reason`
+- `data.document.fetch_method`, `data.document.http.status`, `data.document.http.final_url`
+- `data.document.artifact.content_type`, `data.document.artifact.bytes`
+- Extracted content length (markdown/text) and optional content hash for drift checks
+
+**Informational diffs (volatile, non-gating):**
+- `data.document.fetched_at` (age delta)
+- `meta.duration_ms` (latency delta)
+- `meta.cache.hit` (cache behavior)
+- `data.document.artifact.body_path` (local path changes)
 
 ## Coverage
 
