@@ -17,6 +17,25 @@ def register(
     p.set_defaults(_handler=run)
 
 
+def _append_static_provider(
+    providers_data: list[dict[str, object]],
+    *,
+    provider_id: str,
+    provider_type: str,
+    enabled: bool = True,
+    reason: str | None = None,
+) -> None:
+    providers_data.append(
+        {
+            "id": provider_id,
+            "type": provider_type,
+            "enabled": enabled,
+            "reason": reason,
+            "required_env": [],
+        }
+    )
+
+
 def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
     providers_data: list[dict[str, object]] = []
 
@@ -36,28 +55,25 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
             payload["privacy_warning"] = info.privacy_warning
         providers_data.append(payload)
 
-    providers_data.append(
-        {"id": "http", "type": "fetch", "enabled": True, "reason": None, "required_env": []}
+    _append_static_provider(
+        providers_data,
+        provider_id="http",
+        provider_type="fetch",
     )
     browser_enabled, browser_reason = render_available()
-    providers_data.append(
-        {
-            "id": "browser",
-            "type": "render",
-            "enabled": browser_enabled,
-            "reason": browser_reason,
-            "required_env": [],
-        }
+    _append_static_provider(
+        providers_data,
+        provider_id="browser",
+        provider_type="render",
+        enabled=browser_enabled,
+        reason=browser_reason,
     )
-    providers_data.append(
-        {
-            "id": "readability",
-            "type": "extract",
-            "enabled": True,
-            "reason": None,
-            "required_env": [],
-        }
-    )
+    for extractor_id in ("readability", "docs"):
+        _append_static_provider(
+            providers_data,
+            provider_id=extractor_id,
+            provider_type="extract",
+        )
 
     if wants_plain(args):
         for item in providers_data:

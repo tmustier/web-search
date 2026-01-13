@@ -200,6 +200,7 @@ List available providers and whether they are enabled.
   - enabled (bool) + reason if disabled
   - required env vars (if any)
   - optional `privacy_warning` when provider sends data to third parties
+- Extract providers include `readability` and `docs`.
 
 #### `wstk search "<query>"`
 
@@ -284,6 +285,7 @@ Inputs:
 Key flags:
 - `--strategy <auto|readability|docs>`
 - `--method <http|browser|auto>` (default: `http`; `auto` may try `http` then `browser` in a future “escalate” mode)
+- `--accept <mime>` (default: `text/html,*/*`; applies to HTTP fetch)
 - `--markdown/--text/--both` (default: both)
 - `--max-chars <N>` (guardrails)
 - `--max-tokens <N>` (approx token cap)

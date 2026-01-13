@@ -9,9 +9,10 @@ from wstk import __version__
 from wstk.cache import Cache, CacheSettings
 from wstk.errors import ExitCode, WstkError
 from wstk.output import EnvelopeMeta, make_envelope, print_json
+import wstk.robots as robots
 from wstk.safety import redact_payload
 from wstk.timeutil import parse_duration
-from wstk.urlutil import DomainRules, is_allowed
+from wstk.urlutil import DomainRules, is_allowed, normalize_domains
 
 
 def wants_json(args: argparse.Namespace) -> bool:
@@ -130,8 +131,8 @@ def add_global_flags(parser: argparse.ArgumentParser, *, suppress_defaults: bool
     parser.add_argument(
         "--robots",
         choices=["warn", "respect", "ignore"],
-        default=default("warn"),
-        help="robots.txt stance (default: warn)",
+        default=default(None),
+        help="robots.txt stance (default: warn; strict policy defaults to respect)",
     )
     parser.add_argument(
         "--allow-domain",
@@ -154,9 +155,19 @@ def add_global_flags(parser: argparse.ArgumentParser, *, suppress_defaults: bool
 
 
 def domain_rules_from_args(args: argparse.Namespace) -> DomainRules:
-    allow = tuple(getattr(args, "allow_domain", []) or [])
-    block = tuple(getattr(args, "block_domain", []) or [])
+    allow = normalize_domains(getattr(args, "allow_domain", []) or [])
+    block = normalize_domains(getattr(args, "block_domain", []) or [])
     return DomainRules(allow=allow, block=block)
+
+
+def robots_stance_from_args(args: argparse.Namespace) -> str:
+    stance = getattr(args, "robots", None)
+    if stance:
+        return str(stance)
+    policy = str(getattr(args, "policy", "standard"))
+    if policy == "strict":
+        return "respect"
+    return "warn"
 
 
 def enforce_url_policy(*, args: argparse.Namespace, url: str, operation: str) -> None:
@@ -174,6 +185,46 @@ def enforce_url_policy(*, args: argparse.Namespace, url: str, operation: str) ->
             exit_code=ExitCode.INVALID_USAGE,
             details={"url": url},
         )
+
+
+def enforce_robots_policy(
+    *,
+    args: argparse.Namespace,
+    url: str,
+    operation: str,
+    warnings: list[str],
+    user_agent: str | None = None,
+) -> None:
+    stance = robots_stance_from_args(args)
+    if stance == "ignore":
+        return
+    if not user_agent:
+        user_agent = parse_headers(args).get("user-agent")
+
+    result = robots.check_robots(
+        url,
+        user_agent=user_agent,
+        timeout=float(args.timeout),
+        proxy=args.proxy,
+    )
+    if result.allowed:
+        return
+    suffix = f" ({result.robots_url})" if result.robots_url else ""
+    message = f"robots.txt disallows {operation} for {url}{suffix}"
+    if stance == "warn":
+        append_warning(warnings, message)
+        return
+    raise WstkError(
+        code="robots_disallowed",
+        message=message,
+        exit_code=ExitCode.BLOCKED,
+        details={
+            "url": url,
+            "robots_url": result.robots_url,
+            "operation": operation,
+            "status": result.status,
+        },
+    )
 
 
 def cache_from_args(args: argparse.Namespace) -> Cache:
@@ -200,6 +251,8 @@ def _default_headers(args: argparse.Namespace) -> dict[str, str]:
         headers["user-agent"] = str(args.user_agent)
     if getattr(args, "accept_language", None):
         headers["accept-language"] = str(args.accept_language)
+    if getattr(args, "accept", None):
+        headers["accept"] = str(args.accept)
     return headers
 
 

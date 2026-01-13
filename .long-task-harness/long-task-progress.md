@@ -712,6 +712,353 @@ Refactor shared extraction + settings logic
 
 ---
 
+### Session 22 | 2026-01-13 | Commits: none
+
+#### Metadata
+- **Features**: spec-001 (implemented)
+- **Files Changed**:
+  - `src/wstk/commands/search_cmd.py` - add `--site` query augmentation + allow-domain filter
+  - `tests/test_cli_contract.py` - cover `--site` behavior
+  - `README.md` - add `--site` usage example
+  - `.long-task-harness/spec-gaps.json` - mark spec-001 implemented
+- **Commit Summary**: none (not committed)
+
+#### Goal
+Implement `--site` flag for search
+
+#### Accomplished
+- [x] Added `--site` parsing with query augmentation and allow-domain filtering.
+- [x] Added CLI contract test for `--site` behavior.
+- [x] Documented `--site` usage and updated spec gap status.
+
+#### Decisions
+- None.
+
+#### Surprises
+- None.
+
+#### Context & Learnings
+- Tests: `uv run --extra dev pytest tests/test_cli_contract.py` (passed).
+
+#### Next Steps
+1. Triage remaining spec gaps (spec-002/003/004).
+
+---
+
+### Session 23 | 2026-01-13 | Commits: none
+
+#### Metadata
+- **Features**: cli-001 (verified)
+- **Files Changed**:
+  - `.long-task-harness/long-task-progress.md` (+lines/-lines) - record E2E CLI run
+- **Commit Summary**: none
+
+#### Goal
+Run E2E CLI usage loop for search/fetch/extract/pipeline
+
+#### Accomplished
+- [x] Ran E2E CLI commands for search/fetch/extract/pipeline
+
+#### Decisions
+- None.
+
+#### Surprises
+- None.
+
+#### Context & Learnings
+- `uv run wstk search "openai codex cli" --plain -n 5` → returned 5 OpenAI/Codex URLs.
+- `uv run wstk fetch https://example.com/ --plain` → wrote body to cache path.
+- `uv run wstk extract https://example.com/ --plain --text | head -n 20` → extracted "Example Domain" text.
+- `uv run wstk pipeline "openai codex cli" --plain --top-k 3 --extract-k 1 | head -n 20` → extracted content from `https://developers.openai.com/codex/cli/`.
+
+#### Next Steps
+1. Continue spec-gap triage (spec-002/003/004).
+
+---
+
+### Session 24 | 2026-01-13 | Commits: none
+
+#### Metadata
+- **Features**: spec-001 (completed)
+- **Files Changed**:
+  - `src/wstk/urlutil.py` - add domain normalization helpers
+  - `src/wstk/cli_support.py` - normalize allow/block domain inputs
+  - `src/wstk/commands/search_cmd.py` - reuse normalization for `--site`
+  - `tests/test_cli_contract.py` - exercise URL-style `--site` input
+  - `.long-task-harness/spec-gaps.json` - mark spec-001 done
+  - `.long-task-harness/long-task-progress.md` - record cleanup session
+- **Commit Summary**: none
+
+#### Goal
+Cleanup `--site` handling and close spec-001 gap
+
+#### Accomplished
+- [x] Normalized domain inputs for `--site`, `--allow-domain`, `--block-domain`.
+- [x] Adjusted CLI contract test to cover URL-style `--site` input.
+- [x] Marked spec-001 gap as done with a final note.
+
+#### Decisions
+- None.
+
+#### Surprises
+- None.
+
+#### Context & Learnings
+- Domain normalization now accepts full URLs (scheme/path/port) and dedupes entries.
+
+#### Next Steps
+1. Triage remaining spec gaps (spec-002/003/004).
+2. Deferred: add coverage for allow/block normalization in fetch/extract flows.
+
+---
+
+### Session 25 | 2026-01-13 | Commits: none
+
+#### Metadata
+- **Features**: spec-002 (implemented)
+- **Files Changed**:
+  - `src/wstk/cli_support.py` - allow `--accept` header override
+  - `src/wstk/commands/fetch_cmd.py` - add `--accept` flag
+  - `src/wstk/commands/extract_cmd.py` - add `--accept` flag
+  - `tests/test_cli_contract.py` - assert `--accept` header propagation
+  - `.long-task-harness/spec-gaps.json` - mark spec-002 implemented
+- **Commit Summary**: none
+
+#### Goal
+Implement `--accept` override for HTTP fetch/extract
+
+#### Accomplished
+- [x] Added `--accept` flag for fetch/extract and header parsing support.
+- [x] Added CLI contract test for accept header override.
+- [x] Updated spec gap status to implemented.
+
+#### Decisions
+- None.
+
+#### Context & Learnings
+- Tests: `uv run --extra dev pytest tests/test_cli_contract.py` (passed).
+
+#### Next Steps
+1. Triage remaining spec gaps (spec-003/004).
+
+---
+
+### Session 26 | 2026-01-13 | Commits: none
+
+#### Metadata
+- **Features**: cli-001 (verified)
+- **Files Changed**:
+  - `.long-task-harness/long-task-progress.md` (+lines/-lines) - record E2E CLI run
+- **Commit Summary**: none
+
+#### Goal
+Run E2E CLI usage loop for search/fetch/extract/pipeline
+
+#### Accomplished
+- [x] Ran CLI commands for search/fetch/extract/pipeline.
+
+#### Decisions
+- None.
+
+#### Context & Learnings
+- `uv run wstk search "openai codex cli" --plain -n 5` → returned 5 Codex-related URLs.
+- `uv run wstk fetch https://example.com/ --plain` → wrote cached body path.
+- `uv run wstk extract https://example.com/ --plain --text | head -n 20` → extracted Example Domain text.
+- `uv run wstk pipeline "openai codex cli" --plain --top-k 3 --extract-k 1 | head -n 20` → extracted content from Codex CLI page.
+
+#### Next Steps
+1. Continue spec-gap triage (spec-003/004).
+
+---
+
+### Session 27 | 2026-01-13 | Commits: none
+
+#### Metadata
+- **Features**: spec-002 (completed)
+- **Files Changed**:
+  - `tests/test_cli_contract.py` - add fetch/extract accept override coverage
+  - `docs/spec.md` - document `--accept` for extract
+  - `docs/test-plan.md` - add `--accept` contract coverage
+  - `.long-task-harness/spec-gaps.json` - mark spec-002 done
+  - `.long-task-harness/long-task-progress.md` - record cleanup session
+- **Commit Summary**: none
+
+#### Goal
+Cleanup `--accept` work and close spec-002 gap
+
+#### Accomplished
+- [x] Added CLI contract coverage for extract `--accept` plus shared fetch result helper.
+- [x] Documented extract `--accept` and test-plan coverage for header overrides.
+- [x] Marked spec-002 gap as done with a final note.
+
+#### Decisions
+- None.
+
+#### Surprises
+- None.
+
+#### Context & Learnings
+- Deferred: consider aligning extract header flags with fetch (`--header`, `--headers-file`, `--user-agent`) if needed.
+
+#### Next Steps
+1. Continue spec-gap triage (spec-003/004).
+
+---
+
+### Session 28 | 2026-01-13 | Commits: none
+
+#### Metadata
+- **Features**: spec-003 (implemented)
+- **Files Changed**:
+  - `src/wstk/robots.py` - add robots.txt checker
+  - `src/wstk/cli_support.py` - enforce robots policy helper
+  - `src/wstk/commands/fetch_cmd.py` - apply robots policy before fetch
+  - `src/wstk/commands/extract_cmd.py` - enforce robots policy for URL extraction
+  - `src/wstk/commands/render_cmd.py` - enforce robots policy before render
+  - `src/wstk/commands/pipeline_cmd.py` - enforce robots policy for candidates
+  - `tests/test_cli_contract.py` - add robots warn/respect coverage
+  - `docs/test-plan.md` - document robots policy tests
+  - `.long-task-harness/spec-gaps.json` - mark spec-003 implemented
+  - `.long-task-harness/long-task-progress.md` - record session
+- **Commit Summary**: none
+
+#### Goal
+Implement robots policy handling for network ops.
+
+#### Accomplished
+- [x] Added robots.txt checker and CLI enforcement with warn/respect behaviors.
+- [x] Added CLI contract tests for robots warnings/blocking.
+- [x] Updated spec gap status and test plan coverage.
+
+#### Decisions
+- None.
+
+#### Context & Learnings
+- Tests not run (not requested).
+
+#### Next Steps
+1. Continue spec-gap triage (spec-004).
+
+---
+
+### Session 29 | 2026-01-13 | Commits: none
+
+#### Metadata
+- **Features**: cli-001 (verified)
+- **Files Changed**:
+  - `.long-task-harness/long-task-progress.md` (+lines/-lines) - record E2E CLI usage loop
+- **Commit Summary**: none
+
+#### Goal
+Run E2E CLI usage loop for search/fetch/extract/pipeline
+
+#### Accomplished
+- [x] Ran CLI commands for search/fetch/extract/pipeline.
+
+#### Decisions
+- None.
+
+#### Context & Learnings
+- `uv run wstk search "openai codex cli" --plain | head -n 5` → returned OpenAI Codex CLI URLs.
+- `uv run wstk fetch https://example.com/ --plain` → wrote cached body path.
+- `uv run wstk extract https://example.com/ --plain --text | head -n 20` → extracted Example Domain text.
+- `uv run wstk pipeline "openai codex cli" --plain | head -n 20` → extracted Codex CLI page content.
+
+#### Next Steps
+1. Continue spec-gap triage (spec-004).
+
+---
+
+### Session 30 | 2026-01-13 | Commits: none
+
+#### Metadata
+- **Features**: spec-004 (completed)
+- **Files Changed**:
+  - `src/wstk/commands/providers_cmd.py` (+lines/-lines) - add helper and list extract providers (readability/docs)
+  - `tests/test_cli_contract.py` (+lines/-lines) - assert docs provider appears in plain output
+  - `docs/spec.md` (+lines/-lines) - note docs extractor in providers output
+  - `docs/test-plan.md` (+lines/-lines) - document providers plain output expectations
+  - `.long-task-harness/spec-gaps.json` (+lines/-lines) - mark spec-004 done
+  - `.long-task-harness/long-task-progress.md` (+lines/-lines) - record session
+- **Commit Summary**: none
+
+#### Goal
+Close spec-004 and cleanup providers output.
+
+#### Accomplished
+- [x] Added docs extractor to providers list with shared helper.
+- [x] Updated contract expectations and docs for providers output.
+- [x] Marked spec-004 gap as done with final note.
+
+#### Decisions
+- None.
+
+#### Surprises
+- None.
+
+#### Context & Learnings
+- Deferred: normalize `--prefer-domain` inputs with `normalize_domains` if consistency issues show up.
+
+#### Next Steps
+1. Optional: align `--prefer-domain` normalization with allow/block rules.
+
+---
+
+### Session 31 | 2026-01-13 | Commits: none
+
+#### Metadata
+- **Features**: cli-001 (verified)
+- **Files Changed**:
+  - `.long-task-harness/long-task-progress.md` (+lines/-lines) - record E2E CLI usage loop
+- **Commit Summary**: none
+
+#### Goal
+Run E2E CLI usage loop for search/fetch/extract/pipeline.
+
+#### Accomplished
+- [x] Ran CLI commands for search/fetch/extract/pipeline.
+
+#### Decisions
+- None.
+
+#### Context & Learnings
+- `uv run wstk search "openai codex cli" --plain | head -n 5` → returned OpenAI Codex CLI URLs.
+- `uv run wstk fetch https://example.com/ --plain` → wrote cached body path.
+- `uv run wstk extract https://example.com/ --plain --text | head -n 20` → extracted Example Domain text.
+- `uv run wstk pipeline "openai codex cli" --plain | head -n 20` → extracted Codex CLI page content.
+
+#### Next Steps
+1. None.
+
+---
+
+### Session 32 | 2026-01-13 | Commits: none
+
+#### Metadata
+- **Features**: spec-003 (completed)
+- **Files Changed**:
+  - `.long-task-harness/spec-gaps.json` (+lines/-lines) - mark spec-003 done after tests
+  - `.long-task-harness/long-task-progress.md` (+lines/-lines) - record session
+- **Commit Summary**: none
+
+#### Goal
+Verify robots policy tests and close spec-003.
+
+#### Accomplished
+- [x] Ran CLI contract tests for robots policy coverage.
+- [x] Marked spec-003 as done after test pass.
+
+#### Decisions
+- None.
+
+#### Context & Learnings
+- `uv run --extra dev pytest tests/test_cli_contract.py` passed (12 tests).
+
+#### Next Steps
+1. Commit and push spec-gap updates + docs/tests.
+
+---
+
 <!--
 =============================================================================
 SESSION TEMPLATE - Copy below this line for new sessions

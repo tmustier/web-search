@@ -15,6 +15,30 @@ def normalize_host(host: str) -> str:
     return host.strip().strip(".").lower()
 
 
+def normalize_domain_entry(value: str) -> str | None:
+    candidate = value.strip()
+    if not candidate:
+        return None
+    if "://" not in candidate:
+        candidate = f"//{candidate}"
+    host = urlparse(candidate).hostname
+    if not host:
+        return None
+    return normalize_host(host)
+
+
+def normalize_domains(values: Iterable[str]) -> tuple[str, ...]:
+    domains: list[str] = []
+    seen: set[str] = set()
+    for entry in values:
+        normalized_domain = normalize_domain_entry(str(entry))
+        if not normalized_domain or normalized_domain in seen:
+            continue
+        seen.add(normalized_domain)
+        domains.append(normalized_domain)
+    return tuple(domains)
+
+
 def get_host(url: str) -> str | None:
     parsed = urlparse(url)
     if not parsed.hostname:

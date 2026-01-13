@@ -1,0 +1,29 @@
+{
+  "updated": "2026-01-13",
+  "items": [
+    {
+      "id": "spec-001",
+      "title": "Add --site flag to search (allow-domain + query augmentation)",
+      "status": "done",
+      "notes": "Spec: docs/spec.md:217. Done: --site query augmentation + allow-domain filtering with normalized domain inputs."
+    },
+    {
+      "id": "spec-002",
+      "title": "Add --accept override for fetch/extract HTTP headers",
+      "status": "done",
+      "notes": "Spec: docs/spec.md:247. Added --accept flag for fetch/extract, documented extract flag, and covered header override in CLI contract tests."
+    },
+    {
+      "id": "spec-003",
+      "title": "Implement robots policy (warn/respect/ignore) for network ops",
+      "status": "done",
+      "notes": "Spec: docs/spec.md:146. Default robots stance respects strict policy with CLI contract coverage for warn/respect/strict blocking."
+    },
+    {
+      "id": "spec-004",
+      "title": "Expose docs extractor in providers output",
+      "status": "done",
+      "notes": "Spec: docs/spec.md:192. Added docs extractor to providers output with contract coverage and docs updates."
+    }
+  ]
+}

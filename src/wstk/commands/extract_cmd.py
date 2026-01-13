@@ -7,6 +7,7 @@ from pathlib import Path
 
 from wstk.cli_support import (
     append_warning,
+    enforce_robots_policy,
     enforce_url_policy,
     envelope_and_exit,
     wants_json,
@@ -37,6 +38,7 @@ def register(
     p.add_argument("target", type=str, help="URL, path, or '-' for stdin")
     p.add_argument("--strategy", choices=["auto", "readability", "docs"], default="auto")
     p.add_argument("--method", choices=["http", "browser", "auto"], default="http")
+    p.add_argument("--accept", type=str, default=None, help="Accept header")
     out_group = p.add_mutually_exclusive_group()
     out_group.add_argument("--markdown", action="store_true", help="Output markdown only")
     out_group.add_argument("--text", action="store_true", help="Output text only")
@@ -73,6 +75,7 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
     if target.startswith(("http://", "https://")):
         enforce_url_policy(args=args, url=target, operation="extract")
         html = ""
+        robots_checked = False
         if method in {"http", "auto"}:
             fetch_settings = fetch_settings_from_args(
                 args,
@@ -80,6 +83,14 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
                 follow_redirects=True,
                 detect_blocks=True,
             )
+            enforce_robots_policy(
+                args=args,
+                url=target,
+                operation="extract",
+                warnings=warnings,
+                user_agent=fetch_settings.headers.get("user-agent"),
+            )
+            robots_checked = True
             try:
                 res = fetch_url(target, settings=fetch_settings)
             except WstkError as exc:
@@ -95,6 +106,13 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
                     key=res.cache_hit.key if res.cache_hit else None,
                 )
         if method == "browser":
+            if not robots_checked:
+                enforce_robots_policy(
+                    args=args,
+                    url=target,
+                    operation="extract",
+                    warnings=warnings,
+                )
             render_settings = render_settings_from_args(
                 args,
                 wait_ms=0,

@@ -31,6 +31,7 @@ A portable “search + fetch + render + extract” toolkit intended for coding/r
 Search:
 
 - `uv run wstk search "openai codex cli" --plain | head -n 5`
+- `uv run wstk search "openai codex cli" --site openai.com --plain`
 - `uv run wstk search "openai codex cli" --json | jq '.data.results[0].url'`
 
 Pipeline:

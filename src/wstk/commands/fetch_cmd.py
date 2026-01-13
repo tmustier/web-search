@@ -4,6 +4,7 @@ import argparse
 import time
 
 from wstk.cli_support import (
+    enforce_robots_policy,
     enforce_url_policy,
     envelope_and_exit,
     wants_json,
@@ -32,6 +33,7 @@ def register(
     )
     p.add_argument("--user-agent", type=str, default=None, help="User-Agent header")
     p.add_argument("--accept-language", type=str, default=None, help="Accept-Language header")
+    p.add_argument("--accept", type=str, default=None, help="Accept header")
     p.add_argument(
         "--max-bytes",
         type=int,
@@ -69,6 +71,13 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
         max_bytes=int(args.max_bytes),
         follow_redirects=bool(args.follow_redirects),
         detect_blocks=bool(args.detect_blocks),
+    )
+    enforce_robots_policy(
+        args=args,
+        url=url,
+        operation="fetch",
+        warnings=warnings,
+        user_agent=fetch_settings.headers.get("user-agent"),
     )
     res = fetch_url(url, settings=fetch_settings)
 

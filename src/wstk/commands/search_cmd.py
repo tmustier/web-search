@@ -10,7 +10,7 @@ from wstk.errors import ExitCode, WstkError
 from wstk.output import EnvelopeMeta
 from wstk.search.types import SearchQuery, SearchResultItem
 from wstk.safety import redact_payload, redact_text
-from wstk.urlutil import is_allowed, redact_url
+from wstk.urlutil import DomainRules, is_allowed, normalize_domains, redact_url
 
 
 def register(
@@ -32,6 +32,12 @@ def register(
     )
     p.add_argument("--provider", type=str, default="auto", help="Search provider (default: auto)")
     p.add_argument(
+        "--site",
+        action="append",
+        default=[],
+        help="Limit results to domain (repeatable; adds site: filter)",
+    )
+    p.add_argument(
         "--include-raw", action="store_true", help="Include provider raw payload subset in JSON"
     )
 
@@ -41,8 +47,10 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
         args.provider, timeout=float(args.timeout), proxy=args.proxy
     )
     search_registry.append_provider_warnings(warnings, provider.id)
+    site_domains = _site_domains_from_args(args)
+    query_text = _augment_query_with_sites(str(args.query), site_domains)
     q = SearchQuery(
-        query=str(args.query),
+        query=query_text,
         max_results=int(args.max_results),
         region=args.region,
         safe_search=args.safe_search,
@@ -51,6 +59,8 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
     results = provider.search(q, include_raw=bool(args.include_raw))
 
     rules = domain_rules_from_args(args)
+    if site_domains:
+        rules = DomainRules(allow=(*rules.allow, *site_domains), block=rules.block)
     if rules.allow or rules.block:
         results = [r for r in results if is_allowed(r.url, rules)]
 
@@ -106,3 +116,21 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
         error=None,
         meta=meta,
     )
+
+
+def _site_domains_from_args(args: argparse.Namespace) -> tuple[str, ...]:
+    return normalize_domains(getattr(args, "site", []) or [])
+
+
+def _augment_query_with_sites(query: str, sites: tuple[str, ...]) -> str:
+    query_text = query.strip()
+    if not sites:
+        return query_text
+    if len(sites) == 1:
+        suffix = f"site:{sites[0]}"
+    else:
+        joined = " OR ".join(f"site:{site}" for site in sites)
+        suffix = f"({joined})"
+    if not query_text:
+        return suffix
+    return f"{query_text} {suffix}"

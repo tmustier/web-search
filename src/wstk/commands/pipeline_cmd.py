@@ -9,6 +9,7 @@ import wstk.search.registry as search_registry
 from wstk.cli_support import (
     append_warning,
     domain_rules_from_args,
+    enforce_robots_policy,
     enforce_url_policy,
     envelope_and_exit,
     wants_json,
@@ -253,6 +254,7 @@ def _extract_candidate(
     html = ""
     base_doc: Document | None = None
     providers: list[str] = []
+    robots_checked = False
 
     if method in {"http", "auto"}:
         if fetch_settings is None:
@@ -261,6 +263,14 @@ def _extract_candidate(
                 message="http fetch settings unavailable",
                 exit_code=ExitCode.INVALID_USAGE,
             )
+        enforce_robots_policy(
+            args=args,
+            url=url,
+            operation="pipeline",
+            warnings=warnings,
+            user_agent=fetch_settings.headers.get("user-agent"),
+        )
+        robots_checked = True
         try:
             res = fetch_url(url, settings=fetch_settings)
         except WstkError as exc:
@@ -273,6 +283,13 @@ def _extract_candidate(
             base_doc = res.document
 
     if method == "browser":
+        if not robots_checked:
+            enforce_robots_policy(
+                args=args,
+                url=url,
+                operation="pipeline",
+                warnings=warnings,
+            )
         render_settings = render_settings_from_args(
             args,
             evidence_dir=evidence_dir,

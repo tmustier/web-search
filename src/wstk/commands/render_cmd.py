@@ -4,7 +4,13 @@ import argparse
 import time
 from pathlib import Path
 
-from wstk.cli_support import enforce_url_policy, envelope_and_exit, wants_json, wants_plain
+from wstk.cli_support import (
+    enforce_robots_policy,
+    enforce_url_policy,
+    envelope_and_exit,
+    wants_json,
+    wants_plain,
+)
 from wstk.commands.support import render_settings_from_args
 from wstk.errors import ExitCode, WstkError
 from wstk.output import EnvelopeMeta
@@ -53,6 +59,12 @@ def register(
 def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
     url = str(args.url)
     enforce_url_policy(args=args, url=url, operation="render")
+    enforce_robots_policy(
+        args=args,
+        url=url,
+        operation="render",
+        warnings=warnings,
+    )
 
     if args.no_input and args.headful:
         raise WstkError(

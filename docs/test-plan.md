@@ -24,7 +24,7 @@ For each command that supports `--json`:
 - invalid usage returns `2`.
 
 ### A4) `--plain` stability
-- `providers --plain`: provider ids, 1 per line.
+- `providers --plain`: provider ids (including `readability` + `docs`), 1 per line.
 - `search --plain`: URLs, 1 per line.
 - `fetch --plain`: local body path, 1 per line.
 - `extract --plain`: extracted content only (markdown by default; `--text`/`--markdown` override).
@@ -64,7 +64,9 @@ Mock HTTP fetch responses and verify:
 - 404 → `not_found` / exit `3`
 - 401/403/429 → `blocked` / exit `4`
 - “enable javascript” page → `needs_render` / exit `5`
+- robots policy: `--robots warn` emits warning; `--robots respect` blocks
 - size limit enforcement (`--max-bytes`)
+- `--accept` overrides default Accept header (fetch/extract)
 
 ## E) Extraction tests (local HTML fixtures)
 
