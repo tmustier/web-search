@@ -42,7 +42,7 @@ Use derived summaries for comparisons without mutating snapshots.
 | fetch-hf-fleurs-readme | dataset README fallback | `wstk fetch https://huggingface.co/datasets/google/fleurs/resolve/main/README.md --json --max-bytes 200000` | `tests/data/e2e/fetch-hf-fleurs-readme.json` | ok |
 | fetch-hf-gaia | gated dataset page | `wstk fetch https://huggingface.co/datasets/gaia-benchmark/GAIA --json --max-bytes 200000` | `tests/data/e2e/fetch-hf-gaia.json` | needs_render |
 | fetch-hf-gaia-readme | gated dataset README | `wstk fetch https://huggingface.co/datasets/gaia-benchmark/GAIA/resolve/main/README.md --json --max-bytes 200000` | `tests/data/e2e/fetch-hf-gaia-readme.json` | ok |
-| fetch-notion | login-gated landing | `wstk fetch https://www.notion.so/ --json --max-bytes 200000` | `tests/data/e2e/fetch-notion.json` | ok (login wall) |
+| fetch-notion | login-gated landing | `wstk fetch https://www.notion.so/ --json --max-bytes 200000` | `tests/data/e2e/fetch-notion.json` | needs_render |
 | fetch-httpbin-basic-auth | explicit 401 auth gate | `wstk fetch https://httpbin.org/basic-auth/user/passwd --json --max-bytes 200000` | `tests/data/e2e/fetch-httpbin-basic-auth.json` | blocked (401) |
 | extract-kaggle-browsecomp | bot-protected (Kaggle) | `wstk extract https://www.kaggle.com/competitions/browsecomp --json --strategy docs --markdown --max-chars 2000` | `tests/data/e2e/extract-kaggle-browsecomp.json` | blocked (bot wall) |
 | extract-kaggle-datasets | interactive filters (Kaggle) | `wstk extract "https://www.kaggle.com/datasets?sort=hotness" --json --strategy docs --markdown --max-chars 2000` | `tests/data/e2e/extract-kaggle-datasets.json` | blocked (bot wall) |

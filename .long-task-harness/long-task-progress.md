@@ -1138,6 +1138,7 @@ Document snapshot comparison guidance without mutating ground truth.
 #### Accomplished
 - [x] Added stable vs volatile field guidance for E2E snapshot comparisons.
 - [x] Clarified that raw JSON snapshots remain canonical ground truth.
+- [x] Corrected Notion snapshot expected outcome to `needs_render`.
 
 #### Decisions
 - None.
