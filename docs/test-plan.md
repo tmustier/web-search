@@ -81,7 +81,7 @@ These are the “agent skill” scenarios.
 - `wstk search "<product> docs" --plain | head -n 1 | xargs wstk extract --plain`
 
 ### F2) JS-only page
-- ensure HTTP path returns exit `5` with a clear message (and suggested next command once `render` exists)
+- ensure HTTP path returns exit `5` with a clear message and `wstk render`/`wstk extract --method browser` guidance
 
 ### F3) Blocked page
 - ensure fail-fast in standard policy with exit `4` and diagnostics
@@ -100,4 +100,4 @@ Produce a report tracking:
 - extraction non-empty and simple boilerplate heuristics
 
 Current coverage (v0.1.0):
-- `wstk eval --suite ...` implements search-only metrics (hit@k, MRR, overlap) with a sample suite in `suites/search-basic.jsonl`.
+- `wstk eval --suite ...` implements search + fetch/extract metrics (hit@k, MRR, overlap, blocked/needs_render rates, extraction heuristics) with a sample suite in `suites/search-basic.jsonl`.

@@ -25,7 +25,7 @@
 
 ## Current State
 
-**Last Updated**: 2026-01-06
+**Last Updated**: 2026-01-13
 
 ### What's Working
 - Spec draft and defaults: `docs/spec.md`
@@ -33,17 +33,14 @@
 - Repo overview: `README.md`
 - Session continuity config: `.long-task-harness/*`, `AGENTS.md`, `.claude/settings.json`
 - Python reference implementation scaffold: `pyproject.toml`, `src/wstk/*`, `uv.lock`
-- Working CLI: `wstk providers|search|fetch|extract|eval`
+- Working CLI: `wstk providers|search|pipeline|fetch|render|extract|eval`
 - Sample eval suite: `suites/search-basic.jsonl`
 
 ### What's Not Working
-- No browser rendering path yet (`render`, `--method browser`)
-- No `pipeline` command yet
 - Extraction quality needs tuning for docs-heavy pages (formatting / code blocks)
 
 ### Blocked On
-- Defining the default “doc mode” extraction output shape (beyond readability)
-- Designing explicit escalation for JS-only / blocked pages (render vs remote endpoints)
+- None.
 
 ---
 
@@ -333,6 +330,346 @@ Add agent skill wrapper for Claude Code integration
 #### Next Steps
 1. Test skill in fresh Claude Code session
 2. Consider adding `references/` for advanced troubleshooting (403s, JS-only pages)
+
+### Session 12 | 2026-01-12 | Commits: none
+
+#### Metadata
+- **Features**: providers-001 (completed)
+- **Files Changed**:
+  - `src/wstk/search/registry.py` - add provider metadata + warnings helpers
+  - `src/wstk/commands/search_cmd.py` - append provider privacy warnings
+  - `src/wstk/commands/eval_cmd.py` - propagate provider warnings
+  - `src/wstk/commands/providers_cmd.py` - include privacy_warning metadata
+  - `docs/spec.md` - document `privacy_warning` in providers output
+  - `.long-task-harness/features.json` - mark providers-001 complete
+  - `.long-task-harness/long-task-progress.md` - add session 12 entry
+- **Commit Summary**: none (not committed)
+
+#### Goal
+Surface provider privacy warnings and metadata for search providers
+
+#### Accomplished
+- [x] Added provider metadata registry with privacy warnings
+- [x] Wired search/eval to emit provider warnings in JSON envelopes
+- [x] Included privacy warnings in `wstk providers` output and spec
+
+#### Decisions
+- None.
+
+#### Surprises
+- None.
+
+#### Context & Learnings
+- Tests not run (not requested).
+
+#### Next Steps
+1. Fill remaining gaps in `fetch-001` and `extract-001`
+2. Define policy behavior for `render-001` and implement `wstk render`
+
+---
+
+### Session 13 | 2026-01-12 | Commits: none
+
+#### Metadata
+- **Features**: fetch-001 (completed)
+- **Files Changed**:
+  - `src/wstk/fetch/http.py` - add content-type sniffing + diagnostics helpers
+  - `tests/test_fetch_http.py` - add content-type and diagnostics tests
+  - `docs/spec.md` - document blocked/JS-only next steps
+  - `.long-task-harness/features.json` - mark fetch-001 complete
+  - `.long-task-harness/long-task-progress.md` - add session 13 entry
+- **Commit Summary**: none (not committed)
+
+#### Goal
+Complete fetch pipeline diagnostics and content-type detection
+
+#### Accomplished
+- [x] Added content-type sniffing fallback and normalized types
+- [x] Added structured blocked/needs_render diagnostics with next-step guidance
+- [x] Added tests covering sniffing and diagnostics
+- [x] Documented blocked/JS-only next-step guidance in the spec
+
+#### Decisions
+- None.
+
+#### Surprises
+- **[S1]** `uv run pytest` omits dev extras; `uv run --extra dev` is required for `respx`.
+
+#### Context & Learnings
+- Tests: `uv run --extra dev pytest tests/test_fetch_http.py` (passed).
+
+#### Next Steps
+1. Finish `extract-001` (doc-mode output + provenance + truncation)
+2. Define policy behavior for `render-001` and implement `wstk render`
+
+---
+
+### Session 14 | 2026-01-12 | Commits: none
+
+#### Metadata
+- **Features**: extract-001 (completed)
+- **Files Changed**:
+  - `docs/spec.md` - document doc-mode output and truncation flags
+  - `src/wstk/commands/extract_cmd.py` - add docs strategy, provenance for file inputs, max-tokens
+  - `src/wstk/extract/docs_extractor.py` - implement docs-mode extraction + heuristics
+  - `src/wstk/models.py` - add structured doc extraction data
+  - `tests/test_extract_docs.py` - add docs + truncation tests
+- **Commit Summary**: none (not committed)
+
+#### Goal
+Complete extract-001 (docs mode + provenance + truncation)
+
+#### Accomplished
+- [x] Implemented docs-mode extraction with sections and links
+- [x] Returned Document provenance for file/stdin inputs
+- [x] Added `--max-tokens` truncation and section-aware limits
+- [x] Added extraction tests and updated spec
+
+#### Decisions
+- None.
+
+#### Surprises
+- None.
+
+#### Context & Learnings
+- Tests: `uv run --extra dev pytest tests/test_extract_docs.py` (passed).
+
+#### Next Steps
+1. Start safety-001 (prompt injection detection + `--redact`).
+2. Add advanced troubleshooting docs for wrappers-001 or design render-001 policy.
+
+---
+
+### Session 15 | 2026-01-12 | Commits: none
+
+#### Metadata
+- **Features**: safety-001 (completed)
+- **Files Changed**:
+  - `docs/spec.md` - document prompt-injection warnings + redaction posture
+  - `src/wstk/cli.py` - redact verbose error details when `--redact`
+  - `src/wstk/cli_support.py` - apply redaction to JSON envelopes + update flag help
+  - `src/wstk/commands/extract_cmd.py` - add injection warnings and redacted plain output
+  - `src/wstk/commands/fetch_cmd.py` - redact URLs in non-JSON output
+  - `src/wstk/commands/search_cmd.py` - redact text/snippets + raw payloads
+  - `src/wstk/safety.py` - add redaction + prompt injection helpers
+  - `src/wstk/urlutil.py` - strip userinfo in redacted URLs
+  - `tests/test_extract_docs.py` - add prompt injection + redaction tests
+  - `tests/test_urlutil.py` - add userinfo redaction coverage
+  - `.long-task-harness/features.json` - mark safety-001 complete
+  - `.long-task-harness/long-task-progress.md` - add session 15 entry
+- **Commit Summary**: none (not committed)
+
+#### Goal
+Implement safety warnings and redaction support
+
+#### Accomplished
+- [x] Added prompt-injection detection with warnings surfaced in JSON output
+- [x] Implemented redaction helpers for URLs/secrets and applied them across outputs
+- [x] Added tests for injection warnings and redaction behavior
+
+#### Decisions
+- None.
+
+#### Surprises
+- None.
+
+#### Context & Learnings
+- Tests: `uv run --extra dev pytest tests/test_extract_docs.py tests/test_urlutil.py` (passed).
+
+#### Next Steps
+1. Finish wrappers-001 by adding advanced troubleshooting references.
+2. Define policy behavior for render-001 and implement `wstk render`.
+
+---
+
+### Session 16 | 2026-01-12 | Commits: none
+
+#### Metadata
+- **Features**: wrappers-001 (completed)
+- **Files Changed**:
+  - `SKILL.md` - add decision guide, agent defaults, references
+  - `README.md` - link wrapper docs and references
+  - `docs/claude-code.md` - Claude Code wrapper usage
+  - `references/providers.md` - provider selection and flags
+  - `references/troubleshooting.md` - blocked/JS-only troubleshooting
+  - `.long-task-harness/features.json` - mark wrappers-001 complete
+  - `.long-task-harness/long-task-progress.md` - add session 16 entry
+- **Commit Summary**: none (not committed)
+
+#### Goal
+Finish wrapper docs and references for agent runtimes
+
+#### Accomplished
+- [x] Added troubleshooting/provider reference docs for advanced flags
+- [x] Documented Claude Code wrapper usage and linked wrapper docs in README
+- [x] Clarified SKILL decision guide and JSON-first agent defaults
+
+#### Decisions
+- None.
+
+#### Surprises
+- None.
+
+#### Context & Learnings
+- Tests not run (docs-only changes).
+
+#### Next Steps
+1. Define policy behavior for render-001 and implement `wstk render`.
+2. Expand eval-001 with extraction metrics or suite coverage.
+
+---
+
+### Session 17 | 2026-01-12 | Commits: none
+
+#### Metadata
+- **Features**: eval-001 (completed)
+- **Files Changed**:
+  - `src/wstk/eval/runner.py` - add fetch/extract metrics and summaries
+  - `src/wstk/commands/eval_cmd.py` - wire fetch settings and strict-policy handling
+  - `tests/test_cli_eval_contract.py` - stub fetch and assert new summaries
+  - `docs/spec.md` - mark eval metrics implemented and document target selection
+  - `docs/test-plan.md` - update eval coverage note
+  - `README.md` - update eval status
+  - `.long-task-harness/features.json` - mark eval-001 complete
+  - `.long-task-harness/long-task-progress.md` - add session 17 entry
+- **Commit Summary**: none (not committed)
+
+#### Goal
+Complete eval-001 by adding fetch/extract metrics and summaries
+
+#### Accomplished
+- [x] Added fetch/extract evaluation path with blocked/needs_render counts and extraction heuristics
+- [x] Updated eval summaries, docs, and tests for new metrics
+- [x] Recorded eval-001 completion in harness tracking
+
+#### Decisions
+- None.
+
+#### Surprises
+- None.
+
+#### Context & Learnings
+- Tests: `uv run --extra dev pytest tests/test_cli_eval_contract.py tests/test_eval_suite.py` (passed).
+
+#### Next Steps
+1. Define policy behavior for render-001 and implement `wstk render`.
+2. Implement the `pipeline-001` command surface.
+
+---
+
+### Session 18 | 2026-01-13 | Commits: none
+
+#### Metadata
+- **Features**: render-001 (completed)
+- **Files Changed**:
+  - `src/wstk/render/browser.py` - add Playwright rendering pipeline
+  - `src/wstk/render/__init__.py` - add render package
+  - `src/wstk/commands/render_cmd.py` - add render command
+  - `src/wstk/commands/extract_cmd.py` - support browser method + auto fallback
+  - `src/wstk/commands/providers_cmd.py` - surface browser provider availability
+  - `src/wstk/models.py` - add render metadata to Document
+  - `src/wstk/cli.py` - register render command
+  - `tests/test_cli_render_contract.py` - add render/extract contract tests
+  - `README.md` - document render usage and install steps
+  - `SKILL.md` - update render guidance
+  - `docs/spec.md` - update implementation status
+  - `docs/test-plan.md` - refresh JS-only guidance note
+  - `references/troubleshooting.md` - refresh JS-only escalation guidance
+  - `.long-task-harness/features.json` - mark render-001 complete
+  - `.long-task-harness/long-task-progress.md` - add session 18 entry
+- **Commit Summary**: none (not committed)
+
+#### Goal
+Implement local browser rendering and browser extraction path
+
+#### Accomplished
+- [x] Added Playwright-backed `wstk render` command with evidence capture and error modes
+- [x] Wired `wstk extract --method browser` and `--method auto` fallback to renderer
+- [x] Added render contract tests and updated docs to reflect render availability
+
+#### Decisions
+- None.
+
+#### Surprises
+- None.
+
+#### Context & Learnings
+- Tests: `uv run --extra dev pytest tests/test_cli_render_contract.py` (passed).
+
+#### Next Steps
+1. Implement the `pipeline-001` command surface.
+2. Tune docs-heavy extraction formatting and code blocks.
+
+---
+
+### Session 19 | 2026-01-13 | Commits: none
+
+#### Metadata
+- **Features**: pipeline-001 (completed)
+- **Files Changed**:
+  - `src/wstk/commands/pipeline_cmd.py` - add pipeline command implementation
+  - `src/wstk/cli.py` - register pipeline command
+  - `tests/test_cli_pipeline_contract.py` - pipeline contract tests
+  - `README.md` - document pipeline usage
+  - `SKILL.md` - add pipeline guidance
+  - `docs/spec.md` - mark pipeline implemented
+  - `.long-task-harness/features.json` - mark pipeline-001 complete
+  - `.long-task-harness/long-task-progress.md` - update progress log
+- **Commit Summary**: none (not committed)
+
+#### Goal
+Implement the `pipeline-001` command surface
+
+#### Accomplished
+- [x] Added `wstk pipeline` command with plan mode and domain preference selection
+- [x] Wired pipeline extraction via HTTP/browser with policy gating
+- [x] Added pipeline contract tests and updated docs
+
+#### Decisions
+- None.
+
+#### Surprises
+- None.
+
+#### Context & Learnings
+- Tests: `uv run --extra dev pytest tests/test_cli_pipeline_contract.py` (passed).
+
+#### Next Steps
+1. Tune docs-heavy extraction formatting and code blocks.
+2. Evaluate whether pipeline output needs additional selection metadata.
+
+---
+
+### Session 20 | 2026-01-12 | Commits: none
+
+#### Metadata
+- **Features**: docs-001 (progressed), harness-001 (progressed)
+- **Files Changed**:
+  - `.long-task-harness/long-task-progress.md` - record post-ralph status + spec check
+- **Commit Summary**: none (not committed)
+
+#### Goal
+Document post-ralph status and spec alignment
+
+#### Accomplished
+- [x] Captured spec status (v0.1.0 features implemented; open questions remain)
+- [x] Recorded that a code review/refactor pass is still needed before new work
+
+#### Decisions
+- None.
+
+#### Surprises
+- None.
+
+#### Context & Learnings
+- Feature checklist reports 12/12 complete; spec lists all core commands implemented.
+- A cleanup/refactor pass is still required before proceeding.
+
+#### Next Steps
+1. Review code for clarity/refactors and remove temporary artifacts.
+2. Reconcile spec gaps (e.g., `--site`, `--accept`, robots enforcement) or update spec.
+
+---
 
 <!--
 =============================================================================

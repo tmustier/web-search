@@ -7,6 +7,7 @@ import wstk.search.registry as search_registry
 from wstk.cli_support import envelope_and_exit, wants_json, wants_plain
 from wstk.errors import ExitCode
 from wstk.output import EnvelopeMeta
+from wstk.render.browser import render_available
 
 
 def register(
@@ -19,20 +20,34 @@ def register(
 def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
     providers_data: list[dict[str, object]] = []
 
-    for p in search_registry.list_search_providers(timeout=float(args.timeout), proxy=args.proxy):
-        enabled, reason = p.is_enabled()
-        providers_data.append(
-            {
-                "id": p.id,
-                "type": "search",
-                "enabled": enabled,
-                "reason": reason,
-                "required_env": ["BRAVE_API_KEY"] if p.id == "brave_api" else [],
-            }
-        )
+    for info in search_registry.list_search_provider_info(
+        timeout=float(args.timeout), proxy=args.proxy
+    ):
+        provider = info.provider
+        enabled, reason = provider.is_enabled()
+        payload = {
+            "id": provider.id,
+            "type": "search",
+            "enabled": enabled,
+            "reason": reason,
+            "required_env": list(info.required_env),
+        }
+        if info.privacy_warning:
+            payload["privacy_warning"] = info.privacy_warning
+        providers_data.append(payload)
 
     providers_data.append(
         {"id": "http", "type": "fetch", "enabled": True, "reason": None, "required_env": []}
+    )
+    browser_enabled, browser_reason = render_available()
+    providers_data.append(
+        {
+            "id": "browser",
+            "type": "render",
+            "enabled": browser_enabled,
+            "reason": browser_reason,
+            "required_env": [],
+        }
     )
     providers_data.append(
         {

@@ -9,6 +9,7 @@ from wstk.cli_support import domain_rules_from_args, envelope_and_exit, wants_js
 from wstk.errors import ExitCode, WstkError
 from wstk.output import EnvelopeMeta
 from wstk.search.types import SearchQuery, SearchResultItem
+from wstk.safety import redact_payload, redact_text
 from wstk.urlutil import is_allowed, redact_url
 
 
@@ -39,6 +40,7 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
     provider, provider_meta = search_registry.select_search_provider(
         args.provider, timeout=float(args.timeout), proxy=args.proxy
     )
+    search_registry.append_provider_warnings(warnings, provider.id)
     q = SearchQuery(
         query=str(args.query),
         max_results=int(args.max_results),
@@ -55,13 +57,13 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
     if args.redact:
         results = [
             SearchResultItem(
-                title=r.title,
+                title=redact_text(r.title),
                 url=redact_url(r.url),
-                snippet=r.snippet,
+                snippet=redact_text(r.snippet) if r.snippet else None,
                 published_at=r.published_at,
                 source_provider=r.source_provider,
                 score=r.score,
-                raw=r.raw,
+                raw=redact_payload(r.raw) if r.raw else None,
             )
             for r in results
         ]

@@ -14,6 +14,7 @@ from wstk.cli_support import (
 from wstk.errors import ExitCode
 from wstk.fetch.http import FetchSettings, fetch_url
 from wstk.output import CacheMeta, EnvelopeMeta
+from wstk.urlutil import redact_url
 
 
 def register(
@@ -81,7 +82,10 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
         if res.document.artifact and res.document.artifact.body_path:
             print(res.document.artifact.body_path)
         else:
-            print(res.document.url)
+            output_url = res.document.url
+            if args.redact:
+                output_url = redact_url(output_url)
+            print(output_url)
         return ExitCode.OK
 
     cache_meta = CacheMeta(
@@ -102,7 +106,10 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
         http_info = res.document.http
         artifact = res.document.artifact
         status = http_info.status if http_info else "unknown"
-        print(f"HTTP {status} {res.document.url}")
+        output_url = res.document.url
+        if args.redact:
+            output_url = redact_url(output_url)
+        print(f"HTTP {status} {output_url}")
         if artifact and artifact.body_path:
             print(f"body: {artifact.body_path}")
         return ExitCode.OK

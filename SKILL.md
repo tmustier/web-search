@@ -35,6 +35,19 @@ Key flags:
 - `--plain` — Output URLs only (for piping)
 - `--json` — Structured output
 
+### Pipeline (search → extract)
+
+```bash
+{baseDir}/.venv/bin/wstk pipeline "python asyncio tutorial" --json
+{baseDir}/.venv/bin/wstk pipeline "python asyncio tutorial" --plan --plain
+```
+
+Key flags:
+- `--top-k <N>` — Search results to consider
+- `--extract-k <N>` — Number of results to extract
+- `--plan` — Return candidates without fetching
+- `--method <http|browser|auto>` — Extraction method (default: http)
+
 ### Extract (fetch + extract readable content)
 
 ```bash
@@ -63,6 +76,14 @@ Key flags:
 {baseDir}/.venv/bin/wstk providers --plain
 ```
 
+## Decision Guide
+
+- `search` when you need discovery or candidate URLs.
+- `pipeline` when you want a one-shot search → extract bundle.
+- `fetch` when you need HTTP metadata or the cached body path (no extraction).
+- `extract` when you want readable content from a URL or local HTML.
+- `render` when a page is JS-only or blocked (or use `extract --method browser` for one-step extraction).
+
 ## Common Patterns
 
 **Search → extract top result:**
@@ -88,6 +109,13 @@ url=$({baseDir}/.venv/bin/wstk search "python asyncio tutorial" --plain | head -
 - `--json` — Structured envelope: `{ "ok": bool, "data": {...}, "error": {...} }`
 - Default — Human-readable with colors
 
+## Agent Defaults
+
+- Default to `--json` in agent wrappers; parse `ok`, `error.code`, and `warnings`.
+- Surface concise diagnostics by relaying `error.message` and `error.details.reason` when `ok=false`.
+- Use `--plain` only for piping, and add `--no-input` for non-interactive runs.
+- Consider `--redact` when handling sensitive URLs or content.
+
 ## Exit Codes
 
 - `0` — Success
@@ -105,6 +133,12 @@ url=$({baseDir}/.venv/bin/wstk search "python asyncio tutorial" --plain | head -
 - `--quiet` — Minimal output
 - `--verbose` — Debug diagnostics to stderr
 - `--policy <standard|strict|permissive>` — Safety defaults
+
+## References
+
+- `references/troubleshooting.md` — 403/JS-only guidance and advanced fetch flags.
+- `references/providers.md` — Provider selection and privacy notes.
+- `docs/claude-code.md` — Claude Code wrapper usage.
 
 ## When to Use
 

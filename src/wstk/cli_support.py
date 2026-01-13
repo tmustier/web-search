@@ -9,6 +9,7 @@ from wstk import __version__
 from wstk.cache import Cache, CacheSettings
 from wstk.errors import ExitCode, WstkError
 from wstk.output import EnvelopeMeta, make_envelope, print_json
+from wstk.safety import redact_payload
 from wstk.timeutil import parse_duration
 from wstk.urlutil import DomainRules, is_allowed
 
@@ -119,7 +120,7 @@ def add_global_flags(parser: argparse.ArgumentParser, *, suppress_defaults: bool
         "--redact",
         action="store_true",
         default=default(False),
-        help="Redact query strings from URLs in output",
+        help="Redact common secrets/PII from output",
     )
     parser.add_argument(
         "--robots",
@@ -266,5 +267,7 @@ def envelope_and_exit(
         error=None if error is None else error.to_error_dict(),
         meta=meta,
     )
+    if getattr(args, "redact", False):
+        payload = redact_payload(payload)
     print_envelope(args, payload)
     return ExitCode.OK if ok else (error.exit_code if error is not None else ExitCode.RUNTIME_ERROR)

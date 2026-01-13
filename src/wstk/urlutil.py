@@ -49,9 +49,15 @@ def filter_urls(urls: Iterable[str], rules: DomainRules) -> list[str]:
 
 def redact_url(url: str) -> str:
     parsed = urlparse(url)
+    hostname = parsed.hostname or ""
+    netloc = hostname
+    if parsed.port:
+        netloc = f"{hostname}:{parsed.port}"
+    if not netloc:
+        netloc = parsed.netloc
     redacted = ParseResult(
         scheme=parsed.scheme,
-        netloc=parsed.netloc,
+        netloc=netloc,
         path=parsed.path,
         params=parsed.params,
         query="",

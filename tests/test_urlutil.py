@@ -22,3 +22,7 @@ def test_is_allowed_allowlist() -> None:
 
 def test_redact_url() -> None:
     assert redact_url("https://example.com/a?token=abc#frag") == "https://example.com/a"
+    assert (
+        redact_url("https://user:pass@example.com/path?token=abc")
+        == "https://example.com/path"
+    )

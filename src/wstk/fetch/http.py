@@ -25,6 +25,97 @@ _NEEDS_RENDER_PATTERNS = [
 ]
 
 
+def _find_pattern(patterns: list[re.Pattern[str]], text: str) -> str | None:
+    for pattern in patterns:
+        if pattern.search(text):
+            return pattern.pattern
+    return None
+
+
+def _normalize_content_type(content_type: str | None) -> str | None:
+    if not content_type:
+        return None
+    value = content_type.split(";", 1)[0].strip().lower()
+    return value or None
+
+
+def _sniff_content_type(body: bytes) -> str | None:
+    if not body:
+        return None
+    sample = body[:2048].lstrip()
+    if not sample:
+        return None
+    if sample.startswith(b"%PDF"):
+        return "application/pdf"
+    lowered = sample.lower()
+    if lowered.startswith(b"<!doctype html") or b"<html" in lowered:
+        return "text/html"
+    if lowered.startswith(b"{") or lowered.startswith(b"["):
+        return "application/json"
+    if b"\x00" not in sample:
+        try:
+            sample.decode("utf-8")
+            return "text/plain"
+        except UnicodeDecodeError:
+            return None
+    return None
+
+
+def _detect_content_type(body: bytes, header_type: str | None) -> str | None:
+    normalized = _normalize_content_type(header_type)
+    if normalized and normalized not in {"application/octet-stream", "binary/octet-stream"}:
+        return normalized
+    sniffed = _sniff_content_type(body)
+    return sniffed or normalized
+
+
+def _blocked_next_steps(url: str) -> list[str]:
+    return [
+        f"Try `wstk render {url}` or `wstk extract --method browser {url}`.",
+        "If this site requires a session, use `wstk render --profile <path>` or `--use-system-profile`.",
+        "Consider an alternate source or cached mirror if available.",
+    ]
+
+
+def _needs_render_next_steps(url: str) -> list[str]:
+    return [
+        f"Try `wstk render {url}` or `wstk extract --method browser {url}`.",
+        "If a login is required, use `--profile` or `--use-system-profile`.",
+    ]
+
+
+def _blocked_details(
+    *, url: str, final_url: str, status: int, reason: str, pattern: str | None = None
+) -> dict[str, Any]:
+    details: dict[str, Any] = {
+        "url": url,
+        "final_url": final_url,
+        "status": status,
+        "blocked": True,
+        "reason": reason,
+        "next_steps": _blocked_next_steps(final_url),
+    }
+    if pattern:
+        details["pattern"] = pattern
+    return details
+
+
+def _needs_render_details(
+    *, url: str, final_url: str, status: int, reason: str, pattern: str | None = None
+) -> dict[str, Any]:
+    details: dict[str, Any] = {
+        "url": url,
+        "final_url": final_url,
+        "status": status,
+        "needs_render": True,
+        "reason": reason,
+        "next_steps": _needs_render_next_steps(final_url),
+    }
+    if pattern:
+        details["pattern"] = pattern
+    return details
+
+
 @dataclass(frozen=True, slots=True)
 class FetchSettings:
     timeout: float
@@ -41,14 +132,6 @@ class FetchResult:
     document: Document
     body: bytes
     cache_hit: CacheHit | None
-
-
-def _looks_blocked(text: str) -> bool:
-    return any(p.search(text) for p in _BLOCK_PATTERNS)
-
-
-def _looks_needs_render(text: str) -> bool:
-    return any(p.search(text) for p in _NEEDS_RENDER_PATTERNS)
 
 
 def fetch_url(url: str, *, settings: FetchSettings) -> FetchResult:
@@ -85,7 +168,12 @@ def fetch_url(url: str, *, settings: FetchSettings) -> FetchResult:
             code="blocked",
             message=f"URL blocked or access denied (HTTP {status})",
             exit_code=ExitCode.BLOCKED,
-            details={"url": url, "final_url": final_url, "status": status},
+            details=_blocked_details(
+                url=url,
+                final_url=final_url,
+                status=status,
+                reason="http_status",
+            ),
         )
 
     body = resp.content
@@ -97,28 +185,47 @@ def fetch_url(url: str, *, settings: FetchSettings) -> FetchResult:
             details={"url": url, "bytes": len(body), "max_bytes": settings.max_bytes},
         )
 
-    content_type = resp.headers.get("content-type")
+    content_type = _detect_content_type(body, resp.headers.get("content-type"))
     text_preview = ""
-    if settings.detect_blocks:
+    is_textual = content_type is None or content_type.startswith("text/") or content_type in {
+        "application/xhtml+xml",
+        "application/xml",
+        "application/json",
+    }
+    if settings.detect_blocks and is_textual:
         try:
             text_preview = body[:200_000].decode("utf-8", errors="ignore")
         except Exception:
             text_preview = ""
 
     if settings.detect_blocks and text_preview:
-        if _looks_blocked(text_preview):
-            raise WstkError(
-                code="blocked",
-                message="blocked/bot wall detected in HTML",
-                exit_code=ExitCode.BLOCKED,
-                details={"url": url, "final_url": final_url, "status": status},
-            )
-        if _looks_needs_render(text_preview):
+        needs_render_pattern = _find_pattern(_NEEDS_RENDER_PATTERNS, text_preview)
+        if needs_render_pattern:
             raise WstkError(
                 code="needs_render",
                 message="page appears to require JavaScript rendering",
                 exit_code=ExitCode.NEEDS_RENDER,
-                details={"url": url, "final_url": final_url, "status": status},
+                details=_needs_render_details(
+                    url=url,
+                    final_url=final_url,
+                    status=status,
+                    reason="javascript_required",
+                    pattern=needs_render_pattern,
+                ),
+            )
+        blocked_pattern = _find_pattern(_BLOCK_PATTERNS, text_preview)
+        if blocked_pattern:
+            raise WstkError(
+                code="blocked",
+                message="blocked/bot wall detected in HTML",
+                exit_code=ExitCode.BLOCKED,
+                details=_blocked_details(
+                    url=url,
+                    final_url=final_url,
+                    status=status,
+                    reason="bot_wall",
+                    pattern=blocked_pattern,
+                ),
             )
 
     headers_subset = {}

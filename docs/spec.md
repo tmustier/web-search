@@ -8,10 +8,9 @@ This spec is intentionally “implementation-aware” (so it can be built), but 
 
 Reference implementation lives in this repo:
 
-- Implemented: `wstk providers`, `wstk search`, `wstk fetch`, `wstk extract` (HTTP only, readability extraction), `wstk eval` (search-only metrics)
+- Implemented: `wstk providers`, `wstk search`, `wstk pipeline`, `wstk fetch`, `wstk render`, `wstk extract` (HTTP + browser, readability/docs), `wstk eval` (search + fetch/extract metrics)
 - Search providers: `ddgs` (keyless), `brave_api` (optional `BRAVE_API_KEY`)
 - Fetch: `httpx` + local cache (TTL + size budget)
-- Not yet: `render`, `pipeline`, doc-mode extractor, browser method
 
 ## 1) Problem statement
 
@@ -101,6 +100,7 @@ All downstream components operate on a common `Document` structure:
 - `extracted`:
   - `markdown` (optional)
   - `text` (optional)
+  - `doc` (optional; structured sections + links for docs mode)
   - `title`
   - `language`
   - `content_hash`
@@ -199,6 +199,7 @@ List available providers and whether they are enabled.
   - type (`search`, `fetch`, `render`, `extract`)
   - enabled (bool) + reason if disabled
   - required env vars (if any)
+  - optional `privacy_warning` when provider sends data to third parties
 
 #### `wstk search "<query>"`
 
@@ -248,6 +249,7 @@ Key flags:
 
 Behavior:
 - If blocked (403 / known bot-wall patterns), return exit `4` (and in `--json`, include `blocked=true` and reason). Do not auto-escalate by default.
+- For blocked/JS-only responses, include `next_steps` suggestions (render/extract with browser, use a profile, or alternate sources).
 
 `--plain` behavior:
 - output a local path to the stored response body (useful for piping into `wstk extract <path>`)
@@ -284,10 +286,12 @@ Key flags:
 - `--method <http|browser|auto>` (default: `http`; `auto` may try `http` then `browser` in a future “escalate” mode)
 - `--markdown/--text/--both` (default: both)
 - `--max-chars <N>` (guardrails)
+- `--max-tokens <N>` (approx token cap)
 - `--include-html` (embed HTML in JSON; otherwise store in evidence and return a path)
 
 Output:
 - `Document` (with `extracted` filled)
+- `extracted.doc` includes headings/sections/links for `--strategy docs`
 
 `--plain` behavior:
 - output extracted content (markdown by default; `--text`/`--markdown` override)
@@ -318,8 +322,8 @@ Behavior:
 Run a benchmark suite (queries + expected URLs/answers) and output a report.
 
 Implementation status (v0.1.0):
-- Implemented: search-only eval (`hit@k`, MRR, URL overlap), with cache-backed determinism controls.
-- Not yet: fetch/extract metrics (blocked rates, extraction quality heuristics).
+- Implemented: search eval (`hit@k`, MRR, URL overlap), with cache-backed determinism controls.
+- Implemented: fetch/extract metrics (blocked/needs_render rates, extraction heuristics).
 
 Suite format:
 - `.jsonl` (recommended): one JSON object per line (blank lines + `#` comments allowed).
@@ -336,6 +340,11 @@ Evaluation criterion (v0.1.0):
 - If `expected_urls` is set: case passes when any expected URL appears in top-`k` (normalized, query/fragment stripped).
 - Else if `expected_domains` is set: case passes when any expected domain appears in top-`k` (subdomains allowed).
 - Else: case is unscored.
+
+Fetch/extract target selection (v0.1.0):
+- If `expected_urls` is provided, use the first URL.
+- Else, use the first top-`k` result that matches `expected_domains`.
+- Else, use the top result.
 
 Key flags (v0.1.0):
 - `--suite <path>`
@@ -457,6 +466,7 @@ The toolkit should:
   - `tool_diagnostics` vs `page_text`
 - include `source_url` + timestamps + hashes
 - allow an agent to apply “domain allowlist” defaults centrally
+- warn when extracted content matches common prompt-injection phrases (surfaced via `warnings`)
 - support “watch mode” style affordances (surface sensitive domains and require explicit user confirmation at the agent layer)
 
 ### Policy modes (pragmatic defaults, easy overrides)
@@ -533,6 +543,7 @@ Default stance:
 
 - keep sensitive state (cookies, auth headers) out of stdout JSON
 - store raw artifacts locally with clear retention controls (size limits, TTL, pruning)
+- `--redact` scrubs common secrets/PII from outputs (URLs, text, metadata)
 
 ## 11) Packaging for agent ecosystems (progressive disclosure)
 

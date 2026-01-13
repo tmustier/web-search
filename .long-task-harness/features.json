@@ -4,9 +4,9 @@
   "metadata": {
     "project_name": "web-search",
     "created": "2026-01-06",
-    "last_updated": "2026-01-06",
+    "last_updated": "2026-01-13",
     "total_features": 12,
-    "completed_features": 4
+    "completed_features": 12
   },
   "features": [
     {
@@ -188,8 +188,8 @@
         "Provider selection supports `auto` ordering (prefer configured reliability)",
         "Remote providers with higher privacy surface area are gated (policy/config) and emit clear metadata/warnings"
       ],
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Added privacy warnings for remote search providers.",
       "history": {
         "sessions": [
           {
@@ -197,9 +197,21 @@
             "date": "2026-01-06",
             "action": "progressed",
             "summary": "Added SearchProvider interface and implemented ddgs + brave_api providers with auto selection"
+          },
+          {
+            "session": 12,
+            "date": "2026-01-12",
+            "action": "completed",
+            "summary": "Added provider privacy warnings metadata to search, eval, and providers outputs"
           }
         ],
-        "files": ["src/wstk/search/*"],
+        "files": [
+          "docs/spec.md",
+          "src/wstk/commands/eval_cmd.py",
+          "src/wstk/commands/providers_cmd.py",
+          "src/wstk/commands/search_cmd.py",
+          "src/wstk/search/registry.py"
+        ],
         "decisions": []
       }
     },
@@ -213,8 +225,8 @@
         "Blocked/403 cases fail fast by default with actionable diagnostics",
         "Optional escalation paths documented (browser profile, anti-bot)"
       ],
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Added content-type sniffing and richer blocked/needs_render diagnostics.",
       "history": {
         "sessions": [
           {
@@ -222,9 +234,20 @@
             "date": "2026-01-06",
             "action": "progressed",
             "summary": "Implemented http fetch + cache (TTL/size) with basic blocked/JS-only heuristics"
+          },
+          {
+            "session": 13,
+            "date": "2026-01-12",
+            "action": "completed",
+            "summary": "Added content-type sniffing, actionable blocked/needs_render diagnostics, and fetch-specific tests"
           }
         ],
-        "files": ["src/wstk/fetch/http.py", "src/wstk/cache.py"],
+        "files": [
+          "src/wstk/fetch/http.py",
+          "src/wstk/cache.py",
+          "docs/spec.md",
+          "tests/test_fetch_http.py"
+        ],
         "decisions": []
       }
     },
@@ -238,8 +261,8 @@
         "Provenance metadata included (URL, timestamp, fetch method)",
         "Reasonable truncation strategy with `--max-tokens`/`--max-chars`"
       ],
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Added docs extractor output, provenance for file inputs, and max-token truncation.",
       "history": {
         "sessions": [
           {
@@ -247,9 +270,22 @@
             "date": "2026-01-06",
             "action": "progressed",
             "summary": "Implemented readability-based extraction to markdown/text and wired into `wstk extract`"
+          },
+          {
+            "session": 14,
+            "date": "2026-01-12",
+            "action": "completed",
+            "summary": "Implemented docs-mode extraction with sections/links, added provenance for file inputs, and added max-token truncation + tests"
           }
         ],
-        "files": ["src/wstk/extract/readability_extractor.py"],
+        "files": [
+          "docs/spec.md",
+          "src/wstk/commands/extract_cmd.py",
+          "src/wstk/extract/docs_extractor.py",
+          "src/wstk/extract/readability_extractor.py",
+          "src/wstk/models.py",
+          "tests/test_extract_docs.py"
+        ],
         "decisions": []
       }
     },
@@ -263,9 +299,31 @@
         "Policy modes gate high-privilege fetch methods",
         "Logs avoid storing credentials/cookies by default"
       ],
-      "passes": false,
-      "notes": "",
-      "history": {"sessions": [], "files": [], "decisions": []}
+      "passes": true,
+      "notes": "Added prompt-injection warnings and redaction across outputs.",
+      "history": {
+        "sessions": [
+          {
+            "session": 15,
+            "date": "2026-01-12",
+            "action": "completed",
+            "summary": "Added prompt-injection warnings, redaction helpers, and output sanitization across extract/search/fetch."
+          }
+        ],
+        "files": [
+          "docs/spec.md",
+          "src/wstk/cli.py",
+          "src/wstk/cli_support.py",
+          "src/wstk/commands/extract_cmd.py",
+          "src/wstk/commands/fetch_cmd.py",
+          "src/wstk/commands/search_cmd.py",
+          "src/wstk/safety.py",
+          "src/wstk/urlutil.py",
+          "tests/test_extract_docs.py",
+          "tests/test_urlutil.py"
+        ],
+        "decisions": []
+      }
     },
     {
       "id": "wrappers-001",
@@ -277,8 +335,8 @@
         "Wrappers default to `wstk ... --json` and surface concise diagnostics to the agent",
         "Advanced flags documented in `references/` (403/JS-only troubleshooting, provider notes)"
       ],
-      "passes": false,
-      "notes": "SKILL.md added; references/ for advanced troubleshooting not yet added",
+      "passes": true,
+      "notes": "Added troubleshooting/provider references, Claude Code wrapper notes, and clarified SKILL defaults.",
       "history": {
         "sessions": [
           {
@@ -286,9 +344,21 @@
             "date": "2026-01-06",
             "action": "progressed",
             "summary": "Added SKILL.md with setup, commands, patterns, output formats, exit codes, and when-to-use guidance"
+          },
+          {
+            "session": 16,
+            "date": "2026-01-12",
+            "action": "completed",
+            "summary": "Added troubleshooting/provider references, Claude Code wrapper docs, and clarified SKILL agent defaults"
           }
         ],
-        "files": ["SKILL.md"],
+        "files": [
+          "SKILL.md",
+          "README.md",
+          "docs/claude-code.md",
+          "references/providers.md",
+          "references/troubleshooting.md"
+        ],
         "decisions": []
       }
     },
@@ -302,8 +372,8 @@
         "Report includes success/blocked rates and basic extraction heuristics",
         "Supports adding new suites without code changes"
       ],
-      "passes": false,
-      "notes": "",
+      "passes": true,
+      "notes": "Added fetch/extract metrics and extraction heuristics to eval reporting.",
       "history": {
         "sessions": [
           {
@@ -317,6 +387,12 @@
             "date": "2026-01-06",
             "action": "progressed",
             "summary": "Extracted search-eval runner into a reusable module and simplified the eval command implementation"
+          },
+          {
+            "session": 17,
+            "date": "2026-01-12",
+            "action": "completed",
+            "summary": "Added fetch/extract metrics, eval summaries, and refreshed docs/tests."
           }
         ],
         "files": [
@@ -324,6 +400,7 @@
           "docs/spec.md",
           "docs/test-plan.md",
           "src/wstk/cli.py",
+          "src/wstk/commands/eval_cmd.py",
           "src/wstk/eval/*",
           "suites/search-basic.jsonl",
           "tests/test_cli_eval_contract.py",
@@ -349,9 +426,34 @@
         "Headful/headless behaviors are explicit and respect `--no-input`",
         "Clear error modes: `needs_render` vs `blocked` vs `timeout`"
       ],
-      "passes": false,
-      "notes": "",
-      "history": {"sessions": [], "files": [], "decisions": []}
+      "passes": true,
+      "notes": "Implemented Playwright-backed render command and browser extraction path.",
+      "history": {
+        "sessions": [
+          {
+            "session": 18,
+            "date": "2026-01-13",
+            "action": "completed",
+            "summary": "Added Playwright-based render command, browser extraction fallback, and tests/docs."
+          }
+        ],
+        "files": [
+          "README.md",
+          "SKILL.md",
+          "docs/spec.md",
+          "docs/test-plan.md",
+          "references/troubleshooting.md",
+          "src/wstk/cli.py",
+          "src/wstk/commands/extract_cmd.py",
+          "src/wstk/commands/providers_cmd.py",
+          "src/wstk/commands/render_cmd.py",
+          "src/wstk/models.py",
+          "src/wstk/render/__init__.py",
+          "src/wstk/render/browser.py",
+          "tests/test_cli_render_contract.py"
+        ],
+        "decisions": []
+      }
     },
     {
       "id": "pipeline-001",
@@ -363,9 +465,29 @@
         "Bounded by `--top-k`/`--extract-k` and timeouts",
         "In `standard` policy, does not auto-escalate to browser rendering"
       ],
-      "passes": false,
-      "notes": "",
-      "history": {"sessions": [], "files": [], "decisions": []}
+      "passes": true,
+      "notes": "Implemented pipeline command with plan mode, domain preference, and extraction.",
+      "history": {
+        "sessions": [
+          {
+            "session": 19,
+            "date": "2026-01-13",
+            "action": "completed",
+            "summary": "Implemented pipeline command (search → extract) with plan mode, domain preference, and contract tests."
+          }
+        ],
+        "files": [
+          "README.md",
+          "SKILL.md",
+          "docs/spec.md",
+          "src/wstk/cli.py",
+          "src/wstk/commands/pipeline_cmd.py",
+          "tests/test_cli_pipeline_contract.py",
+          ".long-task-harness/features.json",
+          ".long-task-harness/long-task-progress.md"
+        ],
+        "decisions": []
+      }
     }
   ]
 }

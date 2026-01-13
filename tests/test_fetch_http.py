@@ -56,3 +56,76 @@ def test_fetch_not_found(tmp_path: Path) -> None:
             fetch_url(url, settings=settings)
         assert exc.value.code == "not_found"
         assert exc.value.exit_code == ExitCode.NOT_FOUND
+
+
+def test_fetch_detects_content_type_when_header_missing(tmp_path: Path) -> None:
+    cache = Cache(CacheSettings(cache_dir=tmp_path, ttl=timedelta(days=1), max_mb=10))
+    settings = FetchSettings(
+        timeout=5.0,
+        proxy=None,
+        headers={"user-agent": "wstk-test"},
+        max_bytes=1024 * 1024,
+        follow_redirects=True,
+        detect_blocks=True,
+        cache=cache,
+    )
+
+    url = "https://example.com/page"
+    with respx.mock:
+        respx.get(url).mock(return_value=Response(200, content=b"<html><body>ok</body></html>"))
+        result = fetch_url(url, settings=settings)
+
+    assert result.document.artifact is not None
+    assert result.document.artifact.content_type == "text/html"
+
+
+def test_fetch_blocked_details_include_next_steps(tmp_path: Path) -> None:
+    cache = Cache(CacheSettings(cache_dir=tmp_path, ttl=timedelta(days=1), max_mb=10))
+    settings = FetchSettings(
+        timeout=5.0,
+        proxy=None,
+        headers={"user-agent": "wstk-test"},
+        max_bytes=1024 * 1024,
+        follow_redirects=True,
+        detect_blocks=True,
+        cache=cache,
+    )
+
+    url = "https://example.com/blocked"
+    with respx.mock:
+        respx.get(url).mock(return_value=Response(403))
+        with pytest.raises(WstkError) as exc:
+            fetch_url(url, settings=settings)
+
+    assert exc.value.code == "blocked"
+    details = exc.value.details or {}
+    assert details.get("blocked") is True
+    assert details.get("reason") == "http_status"
+    next_steps = details.get("next_steps")
+    assert isinstance(next_steps, list)
+    assert any("wstk render" in step for step in next_steps)
+
+
+def test_fetch_needs_render_details(tmp_path: Path) -> None:
+    cache = Cache(CacheSettings(cache_dir=tmp_path, ttl=timedelta(days=1), max_mb=10))
+    settings = FetchSettings(
+        timeout=5.0,
+        proxy=None,
+        headers={"user-agent": "wstk-test"},
+        max_bytes=1024 * 1024,
+        follow_redirects=True,
+        detect_blocks=True,
+        cache=cache,
+    )
+
+    url = "https://example.com/js"
+    body = b"<html><noscript>enable javascript</noscript></html>"
+    with respx.mock:
+        respx.get(url).mock(return_value=Response(200, content=body))
+        with pytest.raises(WstkError) as exc:
+            fetch_url(url, settings=settings)
+
+    assert exc.value.code == "needs_render"
+    details = exc.value.details or {}
+    assert details.get("needs_render") is True
+    assert details.get("reason") == "javascript_required"

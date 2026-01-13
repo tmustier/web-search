@@ -8,9 +8,18 @@ from typing import cast
 
 from wstk import __version__
 from wstk.cli_support import add_global_flags, envelope_and_exit, wants_json
-from wstk.commands import eval_cmd, extract_cmd, fetch_cmd, providers_cmd, search_cmd
+from wstk.commands import (
+    eval_cmd,
+    extract_cmd,
+    fetch_cmd,
+    pipeline_cmd,
+    providers_cmd,
+    render_cmd,
+    search_cmd,
+)
 from wstk.errors import ExitCode, WstkError
 from wstk.output import EnvelopeMeta
+from wstk.safety import redact_payload
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -27,7 +36,9 @@ def build_parser() -> argparse.ArgumentParser:
     parents = [global_sub]
     providers_cmd.register(subparsers, parents=parents)
     search_cmd.register(subparsers, parents=parents)
+    pipeline_cmd.register(subparsers, parents=parents)
     fetch_cmd.register(subparsers, parents=parents)
+    render_cmd.register(subparsers, parents=parents)
     extract_cmd.register(subparsers, parents=parents)
     eval_cmd.register(subparsers, parents=parents)
 
@@ -67,7 +78,10 @@ def main(argv: list[str] | None = None) -> int:
             )
         print(f"error: {e.message}", file=sys.stderr)
         if e.details and args.verbose:
-            print(f"details: {e.details}", file=sys.stderr)
+            details = e.details
+            if getattr(args, "redact", False):
+                details = redact_payload(details)
+            print(f"details: {details}", file=sys.stderr)
         return e.exit_code
 
 

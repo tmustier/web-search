@@ -9,12 +9,14 @@ from wstk.cli_support import (
     cache_from_args,
     domain_rules_from_args,
     envelope_and_exit,
+    parse_headers,
     wants_json,
     wants_plain,
 )
 from wstk.errors import ExitCode, WstkError
 from wstk.eval.runner import run_search_eval
 from wstk.eval.suite import load_suite
+from wstk.fetch.http import FetchSettings
 from wstk.output import EnvelopeMeta
 from wstk.search.base import SearchProvider
 
@@ -45,7 +47,9 @@ def register(
         help="Include result items in JSON output",
     )
 
-def _resolve_providers(args: argparse.Namespace) -> list[tuple[str, SearchProvider]]:
+def _resolve_providers(
+    args: argparse.Namespace, warnings: list[str]
+) -> list[tuple[str, SearchProvider]]:
     requested_provider_ids = tuple(getattr(args, "provider", []) or ["auto"])
 
     providers: list[tuple[str, SearchProvider]] = []
@@ -64,6 +68,7 @@ def _resolve_providers(args: argparse.Namespace) -> list[tuple[str, SearchProvid
                 message=f"provider disabled: {resolved_id} ({reason})",
                 exit_code=ExitCode.INVALID_USAGE,
             )
+        search_registry.append_provider_warnings(warnings, resolved_id)
         providers.append((resolved_id, provider))
         seen.add(resolved_id)
     return providers
@@ -71,10 +76,28 @@ def _resolve_providers(args: argparse.Namespace) -> list[tuple[str, SearchProvid
 
 def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
     suite = load_suite(str(args.suite))
-    providers = _resolve_providers(args)
+    providers = _resolve_providers(args, warnings)
 
     cache = cache_from_args(args)
     rules = domain_rules_from_args(args)
+
+    policy = str(args.policy)
+    allow_domains = tuple(getattr(args, "allow_domain", []) or [])
+    if policy == "strict" and not allow_domains:
+        warnings.append(
+            "strict policy requires --allow-domain for eval fetch/extract; skipping fetch/extract metrics"
+        )
+
+    headers = parse_headers(args)
+    fetch_settings = FetchSettings(
+        timeout=float(args.timeout),
+        proxy=args.proxy,
+        headers=headers,
+        max_bytes=5 * 1024 * 1024,
+        follow_redirects=True,
+        detect_blocks=True,
+        cache=cache,
+    )
 
     eval_result = run_search_eval(
         suite=suite,
@@ -84,6 +107,8 @@ def run(*, args: argparse.Namespace, start: float, warnings: list[str]) -> int:
         k=int(args.k),
         redact=bool(args.redact),
         include_results=bool(args.include_results),
+        fetch_settings=fetch_settings,
+        policy=policy,
     )
     report = eval_result.report
     report.setdefault("settings", {})["fail_on"] = str(args.fail_on)
